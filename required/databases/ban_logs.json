@@ -1,0 +1,42 @@
+{
+    "2021": {
+        "July": [
+            {
+                "admin": "NOBODY",
+                "date": "07/31/2021 at 03:45:29",
+                "expiry_date": 1627699829.467,
+                "length_text": "5 Minutes",
+                "name": "Test Subject",
+                "reason": "Disrespected/insulted other players",
+                "steamid": "[U:1:411154214]"
+            },
+            {
+                "admin": "NOBODY",
+                "date": "07/31/2021 at 03:49:01",
+                "expiry_date": 1627700041.0639999,
+                "length_text": "5 Minutes",
+                "name": "Test Subject",
+                "reason": "Disrespectful to Admins/Moderators instructions",
+                "steamid": "[U:1:411154214]"
+            },
+            {
+                "admin": "NOBODY",
+                "date": "07/31/2021 at 04:04:14",
+                "expiry_date": "permanent",
+                "length_text": "Permanent",
+                "name": "Test Subject",
+                "reason": "Disrespected/insulted other players",
+                "steamid": "[U:1:411154214]"
+            },
+            {
+                "admin": "NOBODY",
+                "date": "07/31/2021 at 20:46:36",
+                "expiry_date": 1627761096.8610001,
+                "length_text": "5 Minutes",
+                "name": "Test Subject",
+                "reason": "Disrespected/insulted other players",
+                "steamid": "[U:1:411154214]"
+            }
+        ]
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "Addons Settings": {
+        "admins_chat": {
+            "allow_custom_chat_colors": true,
+            "hide_admin_group": false
+        }
+    },
+    "General Settings": {
+        "anti_spam_chat_messages": true,
+        "chat_prefix": "#redSAM",
+        "enable_!admins_command": true,
+        "enable_!rcon_command": true,
+        "enable_pages_clock": true,
+        "pages_separator_line_length": 40
+    }
+}

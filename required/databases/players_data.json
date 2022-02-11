@@ -1,0 +1,62 @@
+{
+    "[U:1:1120863428]": {
+        "ban_history": [],
+        "first_seen": "07/26/2021",
+        "kick_history": [],
+        "last_seen": "07/26/2021 at 03:11:38",
+        "mute_history": [],
+        "name": "\u4e0d\u4f1a\u6253\u6e38\u620f\u7684\u5c51DIO",
+        "steamid": "[U:1:1120863428]"
+    },
+    "[U:1:39036886]": {
+        "ban_history": [],
+        "first_seen": "07/21/2021",
+        "kick_history": [],
+        "last_seen": "07/31/2021 at 18:52:46",
+        "mute_history": [],
+        "name": "NOBODY",
+        "reports": {},
+        "steamid": "[U:1:39036886]"
+    },
+    "[U:1:411154214]": {
+        "ban_history": [
+            {
+                "admin": "NOBODY",
+                "date": "2021-07-29 18:01:25.620000",
+                "length": "Permanent",
+                "reason": "Disrespected/insulted other players"
+            },
+            {
+                "admin": "NOBODY",
+                "date": "07/29/2021 at 18:20:11",
+                "length": "Permanent",
+                "reason": "Disrespected/insulted other players"
+            },
+            {
+                "admin": "NOBODY",
+                "date": "07/31/2021 at 03:45:29",
+                "length": "5 Minutes",
+                "reason": "Disrespected/insulted other players"
+            },
+            {
+                "admin": "NOBODY",
+                "date": "07/31/2021 at 03:49:01",
+                "length": "5 Minutes",
+                "reason": "Disrespectful to Admins/Moderators instructions"
+            },
+            {
+                "admin": "NOBODY",
+                "date": "07/31/2021 at 04:04:14",
+                "length": "Permanent",
+                "reason": "Disrespected/insulted other players"
+            }
+        ],
+        "first_seen": "07/24/2021",
+        "kick_history": [],
+        "last_seen": "07/31/2021 at 04:04:22",
+        "mute_history": [],
+        "name": "Test Subject",
+        "reports": {},
+        "steamid": "[U:1:411154214]"
+    }
+}

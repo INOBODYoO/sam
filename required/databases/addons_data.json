@@ -1,0 +1,62 @@
+{
+    "admins_chat": {
+        "description": [
+            "Special chat for admins"
+        ],
+        "incompatible": [],
+        "locked": false,
+        "name": "Admins Chat",
+        "state": true,
+        "version": "1.0.b"
+    },
+    "ban_manager": {
+        "description": [
+            "Players banning management"
+        ],
+        "incompatible": [],
+        "locked": true,
+        "name": "Ban Manager",
+        "state": false,
+        "version": 1.0
+    },
+    "bots_manager": {
+        "description": [
+            "Various options to control bots"
+        ],
+        "incompatible": [],
+        "locked": false,
+        "name": "Bots Manager",
+        "state": false,
+        "version": 1.0
+    },
+    "damage_display": {
+        "description": [
+            "Displays damage taken/given to attackers/victims"
+        ],
+        "incompatible": [],
+        "locked": true,
+        "name": "Damage Display",
+        "state": false,
+        "version": 1.0
+    },
+    "example_addon": {
+        "description": [
+            "Developer Addon Template"
+        ],
+        "incompatible": [],
+        "locked": true,
+        "name": "Example Addon",
+        "state": false,
+        "version": "dev"
+    },
+    "join_leave_messages": {
+        "description": [
+            "Notifications when players join/leave the server"
+        ],
+        "incompatible": [],
+        "locked": false,
+        "name": "Join & Leave messages",
+        "state": false,
+        "version": 1.0
+    }
+}

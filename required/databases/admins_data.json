@@ -1,0 +1,22 @@
+{
+    "[U:1:39036886]": {
+        "addons_monitor": false,
+        "admins_chat": false,
+        "admins_manager": false,
+        "ban_level": 0,
+        "ban_manager": false,
+        "bots_manager": false,
+        "group": "mods",
+        "immunity_level": 0,
+        "kick_players": false,
+        "maps_manager": false,
+        "mute_players": false,
+        "name": "NOBODY",
+        "players_manager": false,
+        "rcon_command": false,
+        "settings": false,
+        "since": "07/10/2021",
+        "super_admin": true,
+        "teams_manager": false
+    }
+}

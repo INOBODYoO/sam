@@ -1,0 +1,20 @@
+{
+    "mods": {
+        "addons_monitor": false,
+        "admins_chat": false,
+        "admins_manager": false,
+        "ban_level": 0,
+        "ban_manager": false,
+        "bots_manager": false,
+        "color": "spec",
+        "immunity_level": 0,
+        "kick_players": false,
+        "maps_manager": false,
+        "mute_players": false,
+        "name": "mods",
+        "players_manager": false,
+        "rcon_command": false,
+        "settings": false,
+        "teams_manager": false
+    }
+}
