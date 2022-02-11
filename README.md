@@ -1,4 +1,4 @@
-# SAM (Server Administration Menu)
+# S.A.M (Server Administration Menu)
 #### For [Counter-Strike: Source](https://store.steampowered.com/app/240/CounterStrike_Source/), powered by [EventScripts by Mattie](http://mattie.net/cs/)
 
 ### Introduction:
