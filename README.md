@@ -55,9 +55,8 @@ and line customization.
 2. Install [EventScripts v2.1.1 Beta (Windowns Only) (Patched for current game's version)](https://drive.google.com/file/d/1HORQyHUSURVwnHluTBG9hMqb2D7hZHB2/view?usp=sharing)
 3. Install the latest SAM version
 4. Optional But Recommended:
-
-    1. Create a autoexec.cfg file in your server's cfg folder
-    2. type es_load sam, and save the file
+    - Create a autoexec.cfg file in your server's cfg folder
+    - type es_load sam, and save the file
     
 Installation is complete, to access the menu type !sam in the game chat.
 I also recommend making a bind for easy access, i.e:
