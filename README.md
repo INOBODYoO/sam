@@ -52,7 +52,7 @@ and line customization.
 
 ## How to install:
 1. Install Counter-Strike: Source
-2. Install [EventScripts v2.1.1 Beta (Windowns Only) (Patched for current game's version)](https://drive.google.com/file/d/1HORQyHUSURVwnHluTBG9hMqb2D7hZHB2/view?usp=sharing)
+2. Install [EventScripts v2.1.1 Beta (Windows Only) (Patched for current game's version)](https://drive.google.com/file/d/1HORQyHUSURVwnHluTBG9hMqb2D7hZHB2/view?usp=sharing)
 3. Install the latest SAM version
 4. Optional But Recommended:
     - Create a autoexec.cfg file in your server's cfg folder
