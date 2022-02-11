@@ -60,6 +60,9 @@ and line customization.
     
 Installation is complete, to access the menu type !sam in the game chat.
 I also recommend making a bind for easy access, i.e:
+
 bind . sam_menu
+
 or
+
 bind . "say !sam" 
