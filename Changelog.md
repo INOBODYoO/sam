@@ -131,3 +131,4 @@ existing Addons or functionalities.
 + Ban Logs are no longer stored in files, but rather in their own database.
 + Ban History option now sorts bans by year and month.
 + Ban logs are now shown in a MOTD type message.
++ 
