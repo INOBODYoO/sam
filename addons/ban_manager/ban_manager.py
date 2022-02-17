@@ -24,13 +24,8 @@ lengths      = {1: (('5 Minutes', 300),
                     ('6 Months', 15778476),
                     ('1 Year', 31556952))}
 
-def load():
-    sam.cmds.chat('report', report_CMD)
-
 def unload():
-    # Delete Command
-    sam.cmds.delete('report')
-    # Save database
+    # Save databases
     _save_data()
 
 def addon_page(uid, args=None):
@@ -45,6 +40,7 @@ def addon_page(uid, args=None):
     page.option(3, 'Ban History')
     page.send(uid)
 
+# BAN PROCESS
 def ban_manager_HANDLE(uid, choice, prev_page):
     def r(uid, text):
         sam.msg.hud(uid, text)
@@ -57,10 +53,10 @@ def ban_manager_HANDLE(uid, choice, prev_page):
         inactive = []
         for user in sam.players.list():
             # Skip players who match these checks:
-            # - player is a Super Admin
+            # - player is Super Admin
             # - player is currently banned
             # - player is the user of the page
-            # - player is also an Admin, but with higher immunity level
+            # - player is also an Admin with higher immunity level
             if sam.admins.can(user.steamid, 'super_admin')\
                 or is_banned(user.steamid)\
                 or not sam.admins.immunity_check(uid, user.steamid)\
@@ -132,7 +128,6 @@ def ban_profile_HANDLE(uid, choice, prev_page):
     sam.msg.hud('#admins', '%s ban removed by %s' % (choice['name'], es.getplayername(uid)))
     addon_page(uid)
 
-# START: BAN PLAYER PROCESS
 def player_list_HANDLE(uid, choice, prev_page):
     page = sam.PageSetup('bm_ban_length', ban_length_HANDLE, 'bm_player_list')
     page.title('Ban Manager')
@@ -197,8 +192,26 @@ def ban(info):
 def unban(sid):
     if sid in data.keys(): del data[sid]
     _save_data()
-# END: BAN PLAYER PROCESS
-# START: BAN HISTORY PROCESS
+
+def kick(sid, notify=True):
+    ply = sam.get_player(sid)
+    dat = data[sid] if sid in data.keys() else False
+    if not dat or not ply:
+        return
+    if dat['length_text'] == 'Permanent':
+        kick_t = 'You are permanently banned from the server!'
+        chat_t = '#red%s #whitehas been #orangepermanently banned #whitefrom the server!'\
+                 % dat['name']
+    else:
+        kick_t = 'You are banned for %s from the server. (Reason: %s)'\
+                 % (dat['length_text'], dat['reason'])
+        chat_t = '#red%s #whitehas been #orangebanned for %s #whitefrom the server! (Reason: %s)'\
+                 % (dat['name'], dat['length_text'], dat['reason'])
+    ply.kick(kick_t)
+    if notify:
+        sam.msg.tell('#human', chat_t)
+
+# BAN LOGS
 def ban_history_year_HANDLE(uid, choice, prev_page):
     if not logs[choice].keys():
         sam.msg.hud(uid, 'There aren\'t any bans registered in %s' % choice)
@@ -233,29 +246,6 @@ def ban_history_month_HANDLE(uid, choice, prev_page):
                       'Ban Reason: ' + k['reason']))
         lines.append('-' * 80)
     sam.msg.info(uid, 'Ban History from %s of %s' % (month, year), *lines)
-# END: BAN HISTORY PROCESS
-def kick(sid, notify=True):
-    ply = sam.get_player(sid)
-    dat = data[sid] if sid in data.keys() else False
-    if not dat or not ply:
-        return
-    if dat['length_text'] == 'Permanent':
-        kick_t = 'You are permanently banned from the server!'
-        chat_t = '#red%s #whitehas been #orangepermanently banned #whitefrom the server!'\
-                 % dat['name']
-    else:
-        kick_t = 'You are banned for %s from the server. (Reason: %s)'\
-                 % (dat['length_text'], dat['reason'])
-        chat_t = '#red%s #whitehas been #orangebanned for %s #whitefrom the server! (Reason: %s)'\
-                 % (dat['name'], dat['length_text'], dat['reason'])
-
-    ply.kick(kick_t)
-    if notify:
-        sam.msg.tell('#human', chat_t)
-
-# Command Funtions
-def report_CMD(uid, args=None):
-    pass
 
 # Addon Functions
 def is_banned(sid):
@@ -299,12 +289,13 @@ def _reasons_file():
                     '// - To add/remove a reason, simply add/remove a line',
                     '// - When done editing the file simply save it, this file is read in',
                     '//   real-time, you don\'t need to restart the server or reload the plugin.\n',
-                    'Disrespected/insulted other players',
-                    'Disrespectful to Admins/Moderators instructions',
-                    'Used cheating software or illegal commands',
+                    'Disrespected/insulted players',
+                    'Disrespected/insulted Admins/Moderators',
+                    'Used wall-hack cheating',
+                    'Used Aim-bot cheating',
                     'Abuse of Voice Chat (Loud noises, play music, etc)',
                     'Intentional chat Spam',
-                    'Intentional abuse of a known map bug']))
+                    'Intentional abuse of a known game/map bug']))
 
 # Game Events
 def player_activate(ev):

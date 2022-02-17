@@ -16,7 +16,7 @@
         "incompatible": [],
         "locked": true,
         "name": "Ban Manager",
-        "state": false,
+        "state": true,
         "version": 1.0
     },
     "bots_manager": {
@@ -57,6 +57,17 @@
         "locked": false,
         "name": "Join & Leave messages",
         "state": false,
+        "version": 1.0
+    },
+    "report_system": {
+        "description": [
+            "Allows players to report players"
+        ],
+        "incompatible": [],
+        "locked": false,
+        "name": "Report System",
+        "required": "ban_manager",
+        "state": true,
         "version": 1.0
     }
 }

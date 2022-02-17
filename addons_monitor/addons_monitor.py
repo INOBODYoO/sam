@@ -140,7 +140,7 @@ def _addons_default_data():
             'state': True,
             'version': 1.0,
             'incompatible': ()
-        }
+        },
     }
     '''
         ,

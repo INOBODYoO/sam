@@ -5,9 +5,9 @@ psyco.full()
 sam = es.import_addon('sam')
 sam.settings.addon_config('admins_chat', {
     'hide_admin_group': {
-        'desc': ['If the Admin is in an Admin Group, the group name will be displayed',
-                 'next to the Admin\'s name. (e.g [Mods] John: Hello World)',
-                 'If the setting is enabled then it will not display the Admin\'s Group'],
+        'desc': ['If Admins are in Admin Groups, the group\'s name will be displayed',
+                 'in the chat next to their name. (e.g [Mods] John: Hello World)',
+                 'If this setting is enabled then it will not display the Admin\'s Group'],
         'default': False
     },
     'allow_custom_chat_colors': {
@@ -26,7 +26,7 @@ team_names = {1: 'Spectators', 2: 'Terrorists', 3: 'Counter-Terrorists'}
 def admins_chat_FILTER(uid, text, teamchat):
     default = (uid, text, teamchat)
 
-    # In case message was sent from server console
+    # Message was sent from server console
     if str(uid) == '-1' and text:
         text = text.strip('"').strip()
         sam.msg.tell('#human', '@#graySERVER #white: ' + text)
@@ -40,15 +40,13 @@ def admins_chat_FILTER(uid, text, teamchat):
     #elif sam.import_addon('mute_system').is_muted(uid):
         #return empty
 
-    cfg = sam.settings('admins_chat')
-
     # Gather user info
     text  = text.strip('"')
     user  = sam.get_player(uid)
     team  = user.teamid
     group = sam.admins(user.steamid)['group']
     group = '#white(#%s%s#white) ' % (sam.admins(group)['color'], sam.title(group))\
-            if group and not cfg.hide_admin_group else ''
+            if group and not sam.settings('admins_chat').hide_admin_group else ''
     users = [team_tags[team]] # Message should always be sent to teammates regardless
     args  = text.split()
 
@@ -83,7 +81,7 @@ def admins_chat_FILTER(uid, text, teamchat):
                               (team_tags[team], user.name, f(text)), False)
         return empty
     # If user is in either one of the Teams
-    elif team in (2,3):
+    elif team in (2, 3):
         # Format the text before sending
         text = '#default%s%s%s%s%s #white: %s' % ('*DEAD* ' if user.isdead else '',
                                                   '(%s) ' % team_names[team] if teamchat else '',

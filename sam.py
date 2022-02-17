@@ -14,24 +14,25 @@ psyco.full()
 
 # Script Info
 plugin = es.AddonInfo()
-plugin.name        = 'S.A.M (Server Administration Menu) [Remastered]'
-plugin.version     = '1.0.a'
-plugin.basename    = 'sam'
-plugin.author      = 'NOBODY'
-plugin.description = 'All-In-One server & players administration tool'
+plugin.name           = 'S.A.M (Server Administration Menu) [Remastered]'
+plugin.version        = '1.0-Alpha'
+plugin.basename       = 'sam'
+plugin.author         = 'NOBODY'
+plugin.description    = 'All-In-One players, addons & server administration tool'
+plugin.url            = 'https://github.com/INOBODYoO/sam'
+plugin.developer_mode = 1
 
-""" Debug Level Modes:
+""" Developer Modes Levels:
     1 = Python Exceptions / eventscripts_debug set to 0
-    2 = Menus Build Up
-    3 = Debug Admin (Access to anything even if not Super Admin or regular Admin)
-    4 = Tracks settings updates and prints them into console """
-plugin.debug = 1
+    2 = Pages Setup Debug
+    3 = GodMode (Anyone can access anything in the menu even if not a Super or Regular Admin)
+    4 = Prints all settings updates to console """
 def debug(lvl, *msg):
-    if lvl == plugin.debug:
+    if lvl == plugin.developer_mode:
         for line in msg:
             print('[SAM][DEBUG] %s' % line)
 # Turn off ES debug completely (if SAM debug is)
-es.server.cmd('eventscripts_debug %s' % '0' if bool(plugin.debug) else '-1')
+es.server.cmd('eventscripts_debug %s' % '0' if bool(plugin.developer_mode) else '-1')
 
 # Global Variables
 MODULES = ('players_manager', 'admins_manager', 'addons_monitor', 'settings')
@@ -99,29 +100,28 @@ class _settings_system:
                     'default': '#redSAM',
                 },
                 'anti_spam_chat_messages': {
-                    'desc': ['Repetitive messages sent by SAM will be blocked for an amount',
-                             'of seconds to avoid spamming the chat'],
+                    'desc': ['Repetitive messages sent by SAM will be blocked for a few',
+                             'seconds to avoid spamming the chat'],
                     'default': True,
                 },
                 'enable_!rcon_command': {
-                    'desc': ['Enables !rcon command. (Admins Flag Protected)',
-                             'Enables Admins to execute almost any kind of server',
+                    'desc': ['Enables !rcon command. (Requires "Rcon Command" permission)',
+                             'Allow Admins to execute almost any kind of server',
                              'commands/variables through the game chat'],
                     'default': True,
                 },
                 'enable_!admins_command': {
-                    'desc': ['Page with a list of all Admins currently online'],
+                    'desc': ['Opens a page with a list of all Admins currently online'],
                     'default': True,
                 },
                 'enable_pages_clock': {
-                    'desc': ['Displays a clock in the top right of every page.',
-                             '(Local time clock, which depends on where the server is hosted)'],
+                    'desc': ['Displays a clock in the top righ corner of all pages.',
+                             '(Local time, which is the time from where the server is hosted)'],
                     'default': True,
                 },
                 'pages_separator_line_length': {
-                    'desc': ['Length in characters of separator lines in pages',
-                             '(It is not recommended above 45)'],
-                    'default': 45,
+                    'desc': ['The Length of pages separator lines (Max is 40)'],
+                    'default': 40,
                 },
             },
             'Addons Settings': {},
@@ -425,7 +425,7 @@ class _admins_system:
     def is_admin(self, user):
         if user is None:
             return None
-        elif plugin.debug == 3:
+        elif plugin.developer_mode == 3:
             return True
         elif isinstance(user, int) and es.exists('userid', user):
             user = getsid(user)
@@ -434,7 +434,7 @@ class _admins_system:
         return user in self.admins.keys()
 
     def can(self, uid, flag, notify=True):
-        if plugin.debug == 3:
+        if plugin.developer_mode == 3:
             return True
         sid = getsid(uid)
         if not self.is_admin(sid):
@@ -455,7 +455,7 @@ class _admins_system:
             return max(admin['ban_level'], group['ban_level'] if group else 0)
 
     def immunity_check(self, uid, admin2):
-        if plugin.debug == 3:
+        if plugin.developer_mode == 3:
             return True
         sid = getsid(uid)
         if not self.is_admin(admin2) or sid == admin2:
@@ -555,7 +555,7 @@ class _players_info_system:
              'ban_history': [],
              'kick_history': [],
              'mute_history': [],
-             'reports': {}}
+             'reports': []}
 
         # Update any new keys and values
         if ply.steamid in self.data.keys():
@@ -586,7 +586,8 @@ class PageSetup(object):
         self.all_valid = False
         self.timeout = 0
         self.blocked_options = []
-        self.separator_line = '-' * int(settings('pages_separator_line_length'))
+        sep = int(settings('pages_separator_line_length'))
+        self.separator_line = '-' * sep if sep <= 40 else 40
 
     def title(self, text):
         self.title_text = ' :: ' + text
@@ -614,26 +615,26 @@ class PageSetup(object):
         self.subpages[max(self.subpages.keys()) + 1] = []
 
     def send(self, users, subpage=1):
-        debug(2, '[Initializing Page Process]')
-        debug(2, '* Page ID: %s' % self.pageid)
-        debug(2, '* Previous Page: %s' % self.previous_page)
+        debug(2, '[Initializing Page Setup Process]')
+        debug(2, '- Page ID: %s' % self.pageid)
         display = []
+        debug(2, '- Page Features:')
+        debug(2, '   * Header: %s' % str(bool(self.header_text)))
         if bool(self.header_text):
-            debug(2, '* Setting Header')
             display.append('SAM v%s %s\n \n' %
             (plugin.version, ' ' * 30 + get_time('%H:%M') if settings('enable_pages_clock') else ''))
+        debug(2, '   * Title: %s' % str(bool(self.title_text)))
         if bool(self.title_text):
-            debug(2, '* Setting Title')
             total_subpages = len(self.subpages.keys())
             if total_subpages > 1:
                 display.append('%s   (%s/%s)' % (self.title_text, subpage, total_subpages)
                                 if self.subpage_counter else self.title_text)
             else: display.append(self.title_text)
+        debug(2, '   * Description: %s' % str(bool(self.description_text)))
         if self.description_text:
-            debug(2, '* Setting Description')
             display.extend((self.separator_line, self.description_text))
         display.append(self.separator_line)
-        debug(2, '* Settting up Lines & Options')
+        debug(2, '   * Settting up Lines & Options')
         option = 0
         self.blocked_options = []
         if self.maxlines > 7:
@@ -650,45 +651,47 @@ class PageSetup(object):
             if line['blocked']:
                 self.blocked_options.append(option)
             display.append('%s%s. %s' % ('' if line['blocked'] else '->', option, line['text']))
-        debug(2, '* Blocked Options: %s' % len(self.blocked_options))
+        debug(2, '   * Blocked Options: %s' % len(self.blocked_options))
+        debug(2, '   * Footer: %s' % str(bool(self.footer_text)))
         if self.footer_text:
-            debug(2, '* Setting Footer')
             display.append(self.footer_text)
         if self.close_option:
             display.append(self.separator_line)
         if subpage > 1:
-            debug(2, '* Added Previous Subpage Option')
+            debug(2, '- Previous Page: %s' % self.previous_page)
             display.append('->8. Previous Subpage')
         if subpage + 1 in self.subpages.keys():
-            debug(2, '* Added Next Subpage Option')
+            debug(2, '- Next Page Option Set')
             display.append('->9. Next Subpage')
+        debug(2, '- Close Option: %s' % str(self.close_option))
         if self.close_option:
-            debug(2, '* Setting Close Option')
             text = '0. %s' % ('Previous Page' if self.previous_page else 'Close Page')
             display.append(text)
         if not display:
-            debug(2, '[Aborting Page Process: Empty Page]')
+            debug(2, '[Aborting Page Setup Process: Empty Page]')
             return
         display = '\n'.join(display)
-        debug(2, '* Page display build complete')
+        debug(2, '>> Page display build process complete!')
         cache.pages[self.pageid] = self
-        debug(2, '* Page has been cached')
+        debug(2, '>> Page caching complete!')
         users = (users, ) if isinstance(users, int) else userid_list(users)
         if not users:
-            debug(2, '* No valid users were found')
+            debug(2, '[Aborting Page Setup Process: No Valid Users Found]')
             return
-        debug(2, '* Sending page to users:')
+        debug(2, '>> Sending Page To Users:')
         for user in users:
             uid = int(user)
-            debug(2, '   [ UserID - STEAMID ]')
-            debug(2, '   --------------------')
-            debug(2, '   + %s - %s' % (user, getsid(user)))
+            debug(2, '   -------------------------')
+            debug(2, '   userid - steamid')
+            debug(2, '   -------------------------')
+            debug(2, '   %s      - %s' % (user, getsid(user)))
+            debug(2, '   -------------------------')
             _cancel_page_refresh(uid)
             cache.pages_users[uid] = {'active': self.pageid, 'subpage': subpage}
             es.showMenu(self.timeout, uid, display.encode('utf-8'))
             if self.timeout == 0:
                 delay_task(1, 'refresh_%s_page' % uid, self._refresh_page, uid)
-        debug(2, '[Page process complete]')
+        debug(2, '[Page Setup Process Complete]')
 
     def send_option(self, uid, option):
         option = self.get_option(option)

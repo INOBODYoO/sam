@@ -13,7 +13,7 @@ existing Addons or functionalities.
 
 [Unreleased]
 
-[1.0.0] - (Remastered) - [2021]
+[1.0.0] - (Remastered) - [2022]
 
 [CORE MODULE]
 (Responsible for most important systems and functions)

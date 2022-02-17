@@ -1,24 +1,32 @@
-This window is for informational purposes only and content cant be changed.
-To modify these settings and more you need to access the Settings file under:
-cstrike/addons/eventscripts/sam/required/settings.json
-
-Toggle-able options can be changed from the menu itself, other settings of
-digit or string (text) type values, can only be changed from the settings file
-mentioned above, however changes from the file happen in real-time, meaning
-that server-restarts or SAM reloads ARE NOT REQUIRED for changes to take effect
-
-------------------------------------------------------------------------------------------
-[ Hide Admin Group ]
-- Description:
-If the Admin is in an Admin Group, the group name will be displayed
-next to the Admin's name. (e.g [Mods] John: Hello World)
-If the setting is enabled then it will not display the Admin's Group
-- Default Value: False
-- Current Value: False
-
-[ Allow Custom Chat Colors ]
-- Description:
-Allows Admins to use custom chat colors
-(e.g [Mods] John: #redHello #blueWorld)
-- Default Value: True
-- Current Value: True
+// SAM (Server Administration Menu)
+//
+// Logs are sorted in chronological order.
+ 
+Player: Test Subject
+Ban Admin: NOBODY
+Ban Date: 07/31/2021 at 03:45:29
+Ban Length: 5 Minutes
+Expiration Date: 07/31/2021 at 03:50:29
+Ban Reason: Disrespected/insulted other players
+--------------------------------------------------------------------------------
+Player: Test Subject
+Ban Admin: NOBODY
+Ban Date: 07/31/2021 at 03:49:01
+Ban Length: 5 Minutes
+Expiration Date: 07/31/2021 at 03:54:01
+Ban Reason: Disrespectful to Admins/Moderators instructions
+--------------------------------------------------------------------------------
+Player: Test Subject
+Ban Admin: NOBODY
+Ban Date: 07/31/2021 at 04:04:14
+Ban Length: Permanent
+Expiration Date: Permanent
+Ban Reason: Disrespected/insulted other players
+--------------------------------------------------------------------------------
+Player: Test Subject
+Ban Admin: NOBODY
+Ban Date: 07/31/2021 at 20:46:36
+Ban Length: 5 Minutes
+Expiration Date: 07/31/2021 at 20:51:36
+Ban Reason: Disrespected/insulted other players
+--------------------------------------------------------------------------------
