@@ -51,7 +51,7 @@ is a major improvement on popuplib, with better page & cache handling, blockale 
 and line customization.
 
 ## How to install:
-1. Install Counter-Strike: Source
+1. Requires a Counter-Strike: Source hosted server (or Dedicated Server)
 2. Download & Install [EventScripts v2.1.1 Beta (Windows Only) (Patched for current game's version)](https://drive.google.com/file/d/1HORQyHUSURVwnHluTBG9hMqb2D7hZHB2/view?usp=sharing)
 3. Download & Install [simplejson](https://drive.google.com/file/d/1v2GBUcmoP8oDzQ-qCfrcfWTQqanhHcwy/view?usp=sharing), extract the files to CS:Source css folder
 4. Install the latest SAM version
