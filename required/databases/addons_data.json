@@ -59,14 +59,13 @@
         "state": false,
         "version": 1.0
     },
-    "report_system": {
+    "server_rules": {
         "description": [
-            "Allows players to report players"
+            "Page to display the server rules"
         ],
         "incompatible": [],
         "locked": false,
-        "name": "Report System",
-        "required": "ban_manager",
+        "name": "Server Rules",
         "state": true,
         "version": 1.0
     }

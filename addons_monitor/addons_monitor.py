@@ -141,6 +141,14 @@ def _addons_default_data():
             'version': 1.0,
             'incompatible': ()
         },
+        'server_rules': {
+            'description': ['Page to display the server rules'],
+            'locked': False,
+            'name': 'Server Rules',
+            'state': False,
+            'version': 1.0,
+            'incompatible': ()
+        }
     }
     '''
         ,

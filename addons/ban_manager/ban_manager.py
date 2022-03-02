@@ -40,7 +40,6 @@ def addon_page(uid, args=None):
     page.option(3, 'Ban History')
     page.send(uid)
 
-# BAN PROCESS
 def ban_manager_HANDLE(uid, choice, prev_page):
     def r(uid, text):
         sam.msg.hud(uid, text)
@@ -117,7 +116,7 @@ def ban_profile(uid, info, prev_page=False):
     page.separator()
     page.option(info, 'Unban Player', can != 3)
     if can != 3:
-        page.footer('Only Admins with Ban Level 3 can Unban')
+        page.footer('Only Admins with Ban Level 3 may Unban')
     page.send(uid)
 
 def ban_profile_HANDLE(uid, choice, prev_page):

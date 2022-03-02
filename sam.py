@@ -49,7 +49,7 @@ class _Cache:
         self.sounds = {}
 cache = _Cache()
 
-class _Path:
+class _path:
     def __init__(self):
         self.core = es.getAddonPath('sam')
         self.sounds = 'cstrike/sound/sam_sounds'
@@ -57,7 +57,7 @@ class _Path:
         self.settings = self.core + '/required/settings.json'
         self.databases = self.core + '/required/databases/'
         self.info_window_file = self.core + '/required/info_window (ignore this file).txt'
-path = _Path()
+path = _path()
 
 class _database_system:
     # Create directories
@@ -206,7 +206,7 @@ class _settings_system:
 
 settings = _settings_system()
 
-class _ChatFilters:
+class _chat_filters_system:
 
     def __init__(self):
         self.filters = {}
@@ -254,29 +254,29 @@ class _ChatFilters:
             try: es.addons.unregisterSayFilter(v.block)
             except ValueError: pass
         self.filters.clear()
-chat_filters = _ChatFilters()
+chat_filters = _chat_filters_system()
 
 class _messages_system:
-    """ System responsible for plugin's messaging types """
+    """ Class with all message types functions """
 
     def __init__(self):
         self.spam_queue = []
-        self.chat_colors = {'blue': '71ACDF',
-                            'green': '5cb85c',
-                            'cyan': '5bc0de',
-                            'orange': 'f0ad4e',
-                            'red': 'EF625D',
-                            'black': '292b2c',
-                            'white': 'FFFFFF',
-                            'pink':'ffc0cb',
-                            'gray': 'a9a9a9',
-                            'purple': '931CE2',
-                            'yellow': 'ffff00',
-                            'cyan': '00ffff',
-                            't':'ff3d3d',
-                            'ct': '9bcdff',
-                            'spec':'cdcdcd',
-                            'default':'ffb300'}
+        self.colors = {'blue': '71ACDF',
+                       'green': '5cb85c',
+                       'cyan': '5bc0de',
+                       'orange': 'f0ad4e',
+                       'red': 'EF625D',
+                       'black': '292b2c',
+                       'white': 'FFFFFF',
+                       'pink':'ffc0cb',
+                       'gray': 'a9a9a9',
+                       'purple': '931CE2',
+                       'yellow': 'ffff00',
+                       'cyan': '00ffff',
+                       't':'ff3d3d',
+                       'ct': '9bcdff',
+                       'spec':'cdcdcd',
+                       'default':'ffb300'}
 
     def _compile(self, text, remove=False, special=True):
         """ Compiles the given text making 3 essential changes:
@@ -290,10 +290,10 @@ class _messages_system:
 
             * If the special argument is False then special characters wont be removed"""
         if remove:
-            for color in self.chat_colors.keys():
+            for color in self.colors.keys():
                 text = text.replace('#' + color, '')
         else:
-            for color, code in self.chat_colors.items():
+            for color, code in self.colors.items():
                 text = text.replace('#' + color, '\x07' + code)
         if special:
             for i in ('\\n','\\r','\\t'):

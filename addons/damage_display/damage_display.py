@@ -8,8 +8,7 @@ dat = {}
 
 # Load Block
 def load():
-    for user in sam.userid_list('#all'):
-        _add(user)
+    for user in sam.userid_list('#all'): _add(user)
 
 # Game Events
 def player_hurt(ev):
@@ -24,24 +23,18 @@ def player_hurt(ev):
                 del dat[user][0]
             sam.msg.side(user, False, '\n'.join(sorted(dat[user], reverse=True)))
 
-def player_activate(ev):
-    _add(int(ev['userid']))
+def player_activate(ev): _add(int(ev['userid']))
 
-def player_disconnect(ev):
-    _clear(int(ev['userid']))
+def player_disconnect(ev): _clear(int(ev['userid']))
 
-def player_death(ev):
-    _clear(int(ev['userid']))
+def player_death(ev): _clear(int(ev['userid']))
 
 def round_end(ev):
-    for user in dat.keys():
-        _clear(user)
+    for user in dat.keys(): _clear(user)
 
 # Functions
 def _add(user):
-    if user not in dat.keys():
-        dat[user] = []
+    if user not in dat.keys(): dat[user] = []
 
 def _clear(user):
-    if user in dat.keys():
-        del dat[user][:]
+    if user in dat.keys(): del dat[user][:]

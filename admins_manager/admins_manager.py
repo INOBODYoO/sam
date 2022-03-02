@@ -20,14 +20,14 @@ def module_page(uid):
     page = sam.PageSetup('admins_manager', admins_manager_HANDLE, 'home_page')
     page.title('Admins Manager')
     page.option(1, 'Add New Admin')
-    page.option(2, 'Remove Admin')
-    page.option(3, 'Edit Admin Flags')
+    page.option(2, 'Remove An Admin')
+    page.option(3, 'Edit Admins Profiles')
     page.separator()
     page.newline(':: Admins Groups')
     page.separator()
-    page.option(4, 'Create New Group')
-    page.option(5, 'Edit Group Flags')
-    page.option(6, 'Remove Group')
+    page.option(4, 'Create a Group')
+    page.option(5, 'Delete a Group')
+    page.option(6, 'Edit Groups Profiles')
     online = 0
     super_admins = 0
     for i in sam.userid_list():
@@ -36,22 +36,22 @@ def module_page(uid):
         elif sam.admins.is_admin(i):
             online += 1
     page.footer('Currently Online:',
-                '* Super Admins: %s' % super_admins,
-                '* Admins: %s' % online)
+                '- Super Admins: %s' % super_admins,
+                '- Admins: %s' % online)
     page.send(uid)
 
 def admins_manager_HANDLE(uid, choice, prev_page):
     if choice == 4:
-        sam.msg.tell(uid, '#blueType the name of the group in the' +
-                          ' chat or #red!cancel #blueto stop the operation.')
+        sam.msg.tell(uid, '#blueType the name of the group in the ' +
+                          'chat or #red!cancel #blueto stop the operation.')
         sam.chat_filters.create('new_admin_group', _new_group_FILTER, True, uid)
         return
     elif choice in xrange(1,7):
-        option = {1: ('Add Admin', 'Choose the new Admin:', add_admin),
-                  2: ('Remove Admin', 'Choose the Admin to remove', remove_AdminOrGroup),
-                  3: ('Edit Admin Flags', 'Choose the Admin to edit permission', edit_flags),
-                  5: ('Edit Group Flags', 'Choose the Group to edit permission', edit_flags),
-                  6: ('Remove Group', 'Choose the Group to remove', remove_AdminOrGroup)}[choice]
+        option = {1: ('Add New Admin', 'Choose The New Admin:', add_admin),
+                  2: ('Remove An Admin', 'Choose An Admin:', remove_AdminOrGroup),
+                  3: ('Admins Profiles', 'Choose The Admin:', profile_editor),
+                  5: ('Delete a Group', 'Choose The Group To Be Deleted:', remove_AdminOrGroup),
+                  6: ('Groups Profiles', 'Choose A Group:', profile_editor)}[choice]
         page = sam.PageSetup('admins_groups_list', option[2], 'admins_manager')
         page.title(option[0])
         page.description(option[1])
@@ -87,12 +87,12 @@ def add_admin(uid, user, prev_page=False, super_admin=False):
                                        'since': sam.get_time('%m/%d/%Y')}
     for i in sam.admins.flags:
         sam.admins.admins[user.steamid][i] = False
-    if prev_page: edit_flags(uid, user.steamid)
+    if prev_page: profile_editor(uid, user.steamid)
 
 def remove_AdminOrGroup(uid, target, prev_page):
     module_page(uid)
     if target in sam.admins.list('groups'):
-        sam.msg.hud(uid, '%s group has been removed' % sam.admins(target, 'name'))
+        sam.msg.hud(uid, '%s group has been deleted' % sam.admins(target, 'name'))
         del sam.admins.groups[target]
         for admin in sam.admins.list():
             if sam.admins(admin)['group'] == target:
@@ -113,25 +113,25 @@ def remove_AdminOrGroup(uid, target, prev_page):
             target = sam.getuid(target)
             if target:
                 sam.handle_choice(10, target, True)
-                sam.msg.hud(target, 'You have been demoted from Admin',
-                                    'Your active page has been closed for security reasons')
+                sam.msg.hud(target, 'Your Admin permissions have been removed!',
+                                    'Any active pages have been closed for security reasons.')
             module_page(uid)
             sam.handle_choice(2, uid)
     else:
         sam.msg.hud(uid, '%s is not a valid Admin or Group' % target)
 
-def edit_flags(uid, target, prev_page=None, subpage=1):
+def profile_editor(uid, target, prev_page=None, subpage=1):
     if not sam.admins.can(uid, 'admins_manager'):
         sam.home_page(uid)
         return
     data = sam.admins(target)
     def f(b):
         return 'Yes' if b else 'No'
-    page = sam.PageSetup('edit_flags', edit_flags_HANDLER, 'admins_manager')
+    page = sam.PageSetup('profile_editor', profile_editor_HANDLER, 'admins_manager')
     page.title('Edit Flags')
     if sam.admins.is_admin(target):
         if not sam.admins(sam.getsid(uid), 'super_admin') and data['super_admin']:
-            sam.msg.hud(uid, 'You are not allowed to edit Super Admins')
+            sam.msg.hud(uid, 'You are not allowed manage Super Admins')
             return
         page.description('* NAME: ' + data['name'],
                          '* STEAMID: ' + target,
@@ -148,22 +148,22 @@ def edit_flags(uid, target, prev_page=None, subpage=1):
     if sam.admins.is_admin(target):
         page.maxlines = 5
         page.next_subpage()
-        page.newline('Admin Flags:')
+        page.newline('Permissions:')
     for i in sorted(sam.admins.flags):
         page.option((target, i), '%s: %s' % (sam.title(i), f(data[i])))
     page.send(uid, subpage)
 
-def edit_flags_HANDLER(uid, choice, prev_page):
+def profile_editor_HANDLER(uid, choice, prev_page):
     target, flag = choice
     data = sam.admins(target)
     if flag == 'admin_group':
         groups = sam.admins('groups')
         if bool(groups):
-            page = sam.PageSetup('am_set_group', set_group_HANDLER, 'edit_flags')
-            page.title('Edit Flags')
-            page.description('- Choose a group group')
+            page = sam.PageSetup('am_set_group', set_group_HANDLER, 'profile_editor')
+            page.title('Edit Admins Profiles')
+            page.description('Choose A Group:')
             if data['group']:
-                page.option((target, 1), 'Remove Current Group')
+                page.option((target, 1), 'Remove From Current Group')
             for g in groups.keys():
                 page.option((target, g), sam.title(g))
             page.send(uid)
@@ -171,7 +171,7 @@ def edit_flags_HANDLER(uid, choice, prev_page):
         else:
             sam.msg.hud(uid, 'There aren\'t any Admin groups available')
     elif flag == 'members':
-        page = sam.PageSetup('am_choose_members', set_group_members_HANDLER, 'edit_flags')
+        page = sam.PageSetup('am_choose_members', set_group_members_HANDLER, 'profile_editor')
         page.title('%s Group Members' % sam.title(target))
         page.description('Choose an Admin to either assign',
                          'assign to or remove from this:')
@@ -182,9 +182,9 @@ def edit_flags_HANDLER(uid, choice, prev_page):
         page.send(uid)
         return
     elif flag == 'group_color':
-        page = sam.PageSetup('am_choose_group_color', set_group_color_HANDLER, 'edit_flags')
+        page = sam.PageSetup('am_choose_group_color', set_group_color_HANDLER, 'profile_editor')
         page.title('%s Group Color' % sam.title(target))
-        page.description('Choose a color:')
+        page.description('Choose A Color:')
         for color in sorted(sam.msg.chat_colors.keys()):
             page.option((target, color), sam.title(color))
         page.footer('This color will be used to colorize',
@@ -192,7 +192,7 @@ def edit_flags_HANDLER(uid, choice, prev_page):
         page.send(uid)
         return
     elif flag == 'immunity_level':
-        page = sam.PageSetup('am_choose_immunity', set_immunity_HANDLER, 'edit_flags')
+        page = sam.PageSetup('am_choose_immunity', set_immunity_HANDLER, 'profile_editor')
         page.title('Edit Flags')
         page.description('- Choose the immunity level')
         page.option((target, 0), 0)
@@ -214,13 +214,13 @@ def edit_flags_HANDLER(uid, choice, prev_page):
         data['ban_level'] = lvl + 1 if lvl < 3 else 0
     elif flag in sam.admins.flags:
         data[flag] = not data[flag]
-    edit_flags(uid, target, subpage=prev_page.subpage)
+    profile_editor(uid, target, subpage=prev_page.subpage)
 
 def set_group_color_HANDLER(uid, choice, prev_page):
     target, color = choice
     sam.admins.groups[target]['color'] = color
     sam.msg.hud(uid, '%s color is now %s' % (sam.title(target), color))
-    edit_flags(uid, target)
+    profile_editor(uid, target)
 
 def set_group_members_HANDLER(uid, choice, prev_page):
     target, admin = choice
@@ -233,7 +233,7 @@ def set_group_members_HANDLER(uid, choice, prev_page):
         sam.admins.admins[admin]['group'] = None
         sam.msg.hud(uid, '%s removed from %s group' %
                     (sam.admins(admin)['name'], sam.title(target)))
-    edit_flags(uid, target)
+    profile_editor(uid, target)
     sam.handle_choice(1, uid)
 
 def set_group_HANDLER(uid, choice, prev_page):
@@ -242,14 +242,14 @@ def set_group_HANDLER(uid, choice, prev_page):
     name = sam.admins(target)['name']
     sam.msg.hud(uid, '%s assigned to %s group' % (name, sam.title(target))
                 if group else 'Removed %s from the group' % name)
-    edit_flags(uid, target)
+    profile_editor(uid, target)
 
 def set_immunity_HANDLER(uid, choice, prev_page):
     target, lvl = choice
     dat = sam.admins(target)
     dat['immunity_level'] = lvl
     sam.msg.hud(uid, 'Changed %s immunity level to %s' % (dat['name'], lvl))
-    edit_flags(uid, target)
+    profile_editor(uid, target)
 
 def _firstAdminSetup(uid):
     page = sam.PageSetup('first_admin_setup', first_admin_setup_HANDLE)
@@ -316,7 +316,7 @@ def _new_group_FILTER(uid, text, teamchat):
                                       'color': sam.random(sam.msg.chat_colors.keys())}
             for i in sam.admins.flags:
                 sam.admins.groups[key][i] = False
-            edit_flags(uid, key)
+            profile_editor(uid, key)
         else:
             sam.msg.hud(uid, 'Action denied, %s group already exists!' % (text.title()))
             module_page(uid)

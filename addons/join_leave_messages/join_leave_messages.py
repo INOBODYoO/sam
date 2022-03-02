@@ -10,7 +10,7 @@ def player_activate(ev):
     if sid == 'BOT':
         return
     elif bm and bm.is_banned(sid):
-        sam.msg.console('%s tried to connect to the server while banned!' % ev['es_username'])
+        sam.msg.console('%s attempted to connect to the server while banned!' % ev['es_username'])
         return
     sam.msg.tell('#human', '#spec%s #grayhas joined the server' % ev['es_username'], log=True)
 

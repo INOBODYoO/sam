@@ -64,8 +64,7 @@ def bots_manager_HANDLE(uid, choice, prev_page, subpage=1):
             if cmd == 'bot_difficulty':
                 val = {0: 'Easy', 1: 'Normal', 2: 'Hard', 3: 'Expert'}[int(val)]
             page.option(cmd, '%s: %s' % (sam.title(cmd.replace('bot_', '')), sam.title(val)))
-        page.footer('Some of these commands will only',
-                    'work if sv_cheats is set to 1')
+        page.footer('Some of these commands are sv_cheats protected.')
         page.send(uid, subpage)
         return
     elif choice == 4:
