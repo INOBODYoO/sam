@@ -1,100 +1,135 @@
-[this file is best read using regular expression syntax]
+# Introduction
 
-- Changelog:
+SAM's remastered version is a complete re-work of an older version of SAM, mostly used in
+private, even though EventScripts is unmaintained and outdated and CS:S itself is no longer
+the game it used to be, this version is just to be on the record as one of the biggest
+scriptigng projects ever done by me, and my starting point in programming.
 
-This "Remastered" version is complete re-work of the old plugin, bringing new and improved systems,
-to better fill the ultimate goal of SAM, an all-in-one tool, where server Admins/Operators can
-do almost any kind of server administration/configuration in-game, avoiding to spend hours
-dealing with server files, boring configuration, and unnecessary server restarts.
+#### Remastered Version Note:
+Since so much has changed from the previous versions of the plugin, this changelog will mostly
+contain explanations of SAM's top features, addons, and core systems.
 
-Since much as changed compared to the old plugin, this changelog will be mostly a
-summary explaining what changed in the core module, the new systems, and each changes made to
-existing Addons or functionalities.
+# [1.0.0] - (Remastered) - [2021 / 2022]
 
-[Unreleased]
+## [CORE MODULE] - sam.py
+(Responsible for most important modules, systems and functions)
 
-[1.0.0] - (Remastered) - [2022]
+# Page System:
+> What are pages?
+> 
+> Source games have these popups or "radio popups", a good example is team radios where players
+> use quick sound communications to teamates to send instructions or call out reports in game.
+> SAM uses these popups functionalities to create what I call pages, and therefore create menus
+> with options, all kinds of usefull informations and functionalities, all this in-game of course. 
+> 
+> Previously SAM used a EventScripts popuplib's library to create pages, which the library itself
+> was a buggy mess, and limited SAM too much in what SAM could do.
+> The new Pages System is now built-in SAM and no longer requires ES popuplib, this being
+> the most major change to the plugin and substantially improving SAM's capabilities.
 
-[CORE MODULE]
-(Responsible for most important systems and functions)
++ ES Popuplib library is no longer used.
++ Pages new features:
+  * Header: Top line of every page displaying SAM's installed version and a toggleable local clock.
+  * Title: Mostly to easily identify to what module, system or addon the current page belongs to.
+  * Description: Usually to describe the content of the page.
+  * Lines: Simply lines of text, however the biggest change is that now lines can be placed
+           in between options, where in the old version wasnt possible.
+  * Options: Listed options are enumerated optiosn the player can choose using numbers from 0 to 9
+             (0 represents the number 10 in popups, used mostly as the Close Options and/or Previous Page)
+  * Blocked Options: Options can be block, unabling the user to choose them.
+                     (i.e: When an Addon State was locked by a Super Admin, a regular admin can still
+                      see the Addon listed, however can not change its state because the option is blocked)
+  * Seperators: Seperator lines.
+  * Footer: Usually for informational notes.
++ Added support for toggle-able options, which was previously harder to achieve.
++ Its now possible to force users choices.
+(Mostly usefull to force the user to close the page, or redirect a certain page to the user)
++ Improved user choice processing, pages now keep a dictionary containing the page object,
+  page ID, and previous page information.
 
-+ New Page System:
-    * This new system is a replacement of the old "Menu System", entirely built-in, and no
-      longer uses/requires EventScripts's "popuplib" library. Just like popuplib this system
-      uses the game's "Radio Popups", treated as "Pages", and therefore the name "Page System".
-    + Pages are divided in various sections:
-        * Header: The top line of all pages, contaning info of the in-use version of the
-          plugins and a local time clock.
-        * Title: Usually to point out the the user's active page correspondent module or addon.
-        * Description: Usually to describe the users active page purpose.
-        * Footer: For informative messages, tips or useful indications of the user's active page
-    + Support for toggle-able options, which in the old system was very difficult to achieve.
-    + Improved user choice processing, to better redirect the user to the pages he is supose
-      to go. Its also possible to force users choices which in some cases this is very handy.
-      (e.g To force the user to close the active page when the plugin is unloaded.)
+# Database System:
+> Previously I had this rule where SAM should be independable at all costs, and sort of is, 
+> however EventScripts lacks a good data storage system.
+> 
+> To work this out I broke my own rule by making SAM dependable of SimpleJSON, to use
+> JSON file format as one of the best data storage solutions, however even this might
+> be changed to sqlite-dict.
++ Now using SimpleJSON library to store data in JSON file format.
+- No longer uses Pickle for data storage
+* Fixed system saving empty data, leading to empty files.
 
-+ New Database System:
-    + Now using SimpleJSON library to store data in JSON file format.
-    - No longer uses the old data storage method, cPickle.
-    * Fixed system saving empty data, leading to empty files.
+# Message System
+(Represents all message type functions available)
+> All message types are:
+> - Tell: Chat message. These can be color coded by using tags such as: #red, #blue, #green, and many others
+> - Hud: A hudhint message, appears in bottom center of the screen.
+> - Side: Hint type message, appears in the right center of the screen.
+> - Center: Center type message, appears in the center of the screen.
+> - VGUIPanel / Motd: Theres various funtionalities with this one, but it's mostly used as MOTD type
+>					  message, to send web links to the user, of text documents.
+> - Info: As decribed above, takes advantage of VGUIPanel to send text documents.
+>		  SAM mostly uses this so players can view log files, ranking systems and settings files in game.
+>		  (However they are for view only, cannot be edited)
+> - Console: Console messages, system messages, logging and debugging.
 
-[Other Changes]
-+ Added timestamps to Console messages
++ Added Info type message.
++ Added timestamps to Console messages.
++ Added a Anti Spam system, to avoid multiple repeated messages from SAM to spam the chat.
++ Changed system to a class type.
++ Improved Compiler function to replace color tags, remove special characters and white spaces
 
-[Settings Module]
-(Responsible for storing and managing the core and all addons settings)
+# Settings Module
+(New module responsible for all general and addon settings)
 
-* A very user friendly system that allows any setting to be changed in realtime without the
-  need to ever restart the server or reload the plugin for any changes to take effect
-* Toggle-able options can be changed from the menu itself, for ease of use.
-* Digit or String (text) type settings can only be changed in the settings.json file under the
-  'required' folder, however take in mind once again, changes happen in realtime as soon
-  as you save the file, no restarts or reloads are needed.
-* When browsing settings in the menu, for each section/addon, theres a Settings Information
-  option, which will open an MOTD window with the detailed description of each setting for the
-  choosen section/addon, so users better understand what each setting does.
+- Now possible to change any toggle-able settings in the menu.
+- Other settings types must be changed in the respective file with the required/settings folder
+- All changes made either in game or through the file happen in real-time,
+  restarts or reloads are not required.
+- In all Settings pages, on the bottom of the page theres a Help option, when chosen
+  a Info type message will be sent with the setting file of the respective module/addon,
+  where the user can learn all settings and their descriptions of that module/addon.
 
-[Admins Manager Module]
-(Built-in system to add or remove Admins and change their permissions either individually or
- by creating Admins Groups with sets of permissions and assign Admins to it)
+# Admins Manager Module
+(Responsible for managing and editing admins & admins groups)
+> One of SAM biggest features is its built-in Admins system.
+> One can Add & Remove Admins, changes their permissions, or create admins groups with
+> specific permissions and assign Admins to them to make things easy. All this in-game.
 
-+ Introducing Super Admins, functioning the same as SourceMods root Admins,
-  having access and immunity to everything.
-+ At least one Super Admin is required to operate SAM.
-+ Fixed various Access & Immunity checks as Admins use the plugin's systems.
-+ Re-designed Admins Profile page, for much easier change of admins groups,
-  immunity level, ban levels and systems flags.
-+ Re-worked First Admin Setup:
-    * Just like the previous method, after installing and loading SAM, using !sam in the
-      chat will prompt the user with the First Admin Setup page, asking the user if the user
-      wants to add himself as Super Admin, the user will be required to type the exact server
-      RCON password in the game chat to confirm if the user is a server owner/operator.
-+ Added a counter to the module page displaying the number of Super Admins and the number
-  of regular Admins currently online in the server.
-+ Admins Profile will now also display the date of when the player was added as Admin.
++ If SAM does not find a Admins Database or no Admins added to it, and one opens !sam,
+  SAM will promt the user if one wants to become Super Admin, however to take effect
+  the user will be required to type the exact RCON password in the game chat for validation.
+  Upon validation the user will become Super Admins.
+  This also means that SAM can only work properly with at least one Super Admin.
++ Added Super Admins, the same as SourceMod's root Admins, with access & immunity to
+  anything and everything.
++ Re-designed Admins Profile page, now featuring:
+	- Admin Name, SteamID and Since Date
+	- Add/Remove Admins as Super Admin
+	- Admin Group, if none, its possible to easily remove the or even add the admin to a group
+	- Change Ban Level
+	- Change Immunity Level
+	- Change all other modules/addons permissions
++ In the footer of the module page theres now a counter of the current online Admins & Super Admins
 + Added a Group Members option when editing an Admin Group, to easily assign or remove
   multiple Admins to/from a Group.
 + Added a Group Color option when editing an Admin Group to choose a color to represent
   the selected group. This color is used to colorize the group name in the game chat,
   by default a random color will be assigned to the group when created
-* Improved !admins command, re-designed the page, Super Admins will be listed first
-  following with regular Admins, each identified with the respective Admin group if in any.
-- Removed Update Check system.
-- Removed Multi-Language System, now only English is supported.
+* Improved !admins command, Super Admins will be listed first following with regular Admins,
+  each identified with the respective Admin group if in any.
 
-[Players Manager Module]
+# Players Manager Module
 (Responsible for handling player penalties that can be applied by admins)
 
 + An all new class based system with more than 10 available penalties and some custom built,
-  "fun" like, functions to use on players, like: Fireworks, Drug Mode, and more.
+  "fun" like functions to use on players, like: Fireworks, Drug Mode, and more.
 + Now Addons can also  take advantage of the new class system to apply penalties in certain
-  situations. (e.g kicking AFK players, and much more)
+  situations. (i.g kicking AFK players)
 * The Ban and Mute System have each been ported to their own standalone Addon.
 - Unlike the old version, only a selection of penalties will feature chat commands
-  (Some of the supported commands are !kick, !ban/!unban and !mute/unmute)
 
-[Addons Monitor Module]
-(Responsible for monitoring Addons, loading, unloading them or locking their state)
+# Addons Monitor Module
+(Responsible for monitoring, loading, unloading Addons)
 
 + Improved toggle-able options visually, in a simplified manner.
 + Locked Addons can only be accessed by Super Admins, meaning that Admins with the
@@ -102,33 +137,28 @@ existing Addons or functionalities.
 + If an Addon has its own settings, after the first time the Addon is loaded up, the same
   Settings Help Window option will appear in the Addon profile page.
 
-[Admins Chat Addon]
+# Addons Section:
+(Not all Addons will be mentioned below, but only the ones who received major changes)
 
-+ The filter now respects the "chat rules", to who the player is allowed to speak to
-  depending on the player team, state, and also considering sv_alltalk variable.
-+ Starting a message with @ in the team's chat, will make the Admin send an @ADMINS message which
-  will only be displayed to all other Admins.
-+ Starting a chat message with @ will make the Admin send a @SERVER message which will
-  be displayed to all players in the server.
-+ The 'say' command in the server console was also replaced and will act as a
-  @SERVER message
-+ Starting a message with @@ will display the message in the center of the screen to all players
-+ Admins are allowed to use custom colors in messages in realtime
-  (e.g #redHello #blueWorld)
+[Admins Chat]
 
-[Damage Display Addon]
-
-+ Will now display up to five lines, informing the damage given to and taken from players
++ Admins default chat colour is now in white.
++ Admins can use @ for special functions:
+	- Starting team messages with one @ will send the message in private to all other Admins.
+	- Starting an all-chat with @ will send a @SERVER message, anyone in the server can see it.
+	- Starting an all-chat with @@ will send a center message, anyone in the server can see it.
++ Admins can use color codes in their own messages.
++ The 'say' command in the server console was replaced and will act as @SERVER message.
 
 [Ban Manager Addon]
 
-+ Ban a Player option now lists 2 groups of players, Online players and Offline players,
-  Offline players being players that have been in the server before but aren't currently active.
++ Ban option now lists 2 groups of players, Online players and Offline players, Offline players
+  being players that have been in the server before but aren't currently active.
+  This allows Admins to ban players even when they are not in the server.
 + Ban lengths are now sorted and grouped by Ban Levels, and the Admin's ban level will be
-  shown at the page footer.
+  displayed in the page footer.
 + Ban Profile page now lists the player name, SteamID, the date the ban was given,
-  the ban expiration date + hour, the Admin that gave the ban and the ban reason.
+  ban expiration date + hour, the Admin that gave the ban and the ban reason.
 + Ban Logs are no longer stored in files, but rather in their own database.
-+ Ban History option now sorts bans by year and month.
-+ Ban logs are now shown in a MOTD type message.
-+ 
++ Ban History option now sorts bans by year + month.
++ Ban logs are now shown in a Info type message.
