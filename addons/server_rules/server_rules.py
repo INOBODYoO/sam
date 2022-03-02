@@ -6,7 +6,7 @@ import psyco
 psyco.full()
 
 sam = es.import_addon('sam')
-file = sam.path.core + '/server_rules.txt'
+file = sam.path.core + '/required/server_rules.txt'
 
 sam.settings.addon_config('server_rules', {
     'display_on_player_activate': {
