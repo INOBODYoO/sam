@@ -611,6 +611,14 @@ class PageSetup(object):
                                        'blocked': blocked,
                                        'choice': len(self.subpages[subpage]) + 1})
 
+    def options(self, obj):
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                self.option(v, k)
+            return
+        for i in obj:
+            self.option(i, i)
+
     def next_subpage(self):
         self.subpages[max(self.subpages.keys()) + 1] = []
 
@@ -972,6 +980,22 @@ def percentof(part, whole):
 
 def title(text):
     return text.title().replace('_', ' ') if text else 'None'
+
+def read_file(file_path, default=None):
+    if not os.path.isfile(file_path) and default_file:
+        write_file(default)
+    lines = []
+    with open(file_path, 'r') as f:
+        for line in f.readlines():
+            line = line.strip().replace('\n', '')
+            if not line.startswith('//') and not line.startswith(' ') and line != '':
+                lines.append(line)
+    return lines
+
+def write_file(file_path, lines):
+    if not os.path.isfile(file_path):
+        with open(file_path, 'w') as f:
+            f.write('\n'.join(lines))
 
 # Page Functions
 def handle_choice(choice, user, force_close=False):

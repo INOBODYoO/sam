@@ -8,21 +8,42 @@ sam = es.import_addon('sam')
 sam.HOME_PAGE_ADDONS.append('ban_manager')
 
 # Global Variables
-data         = sam.databases.load('ban_players_data')
-logs         = sam.databases.load('ban_logs')
-path_reasons = sam.path.core + '/required/ban_reasons.txt'
-lengths      = {1: (('5 Minutes', 300),
-                    ('30 Minutes', 1800),
-                    ('1 Hour', 3600),
-                    ('3 Hours', 10800),
-                    ('12 Hours', 43200),
-                    ('1 Day', 86400)),
-                2: (('3 Days', 259200),
-                    ('1 Week', 604800),
-                    ('1 Month', 2629746),
-                    ('3 Months', 7889238),
-                    ('6 Months', 15778476),
-                    ('1 Year', 31556952))}
+data = sam.databases.load('ban_players_data')
+logs = sam.databases.load('ban_logs')
+reasons_file = sam.path.core + '/required/ban_reasons.txt'
+reasons = [
+    '// SAM - Ban Reasons File',
+    '// ',
+    '// Right down the reasons you want to be available for Admins to choose from',
+    '// when banning a player. To do so:',
+    '// - To add/remove a reason, simply add/remove a line',
+    '// - When done editing the file simply save it, this file is read in',
+    '//   real-time, you don\'t need to restart the server or reload the plugin.\n',
+    'Disrespected/insulted players',
+    'Disrespected/insulted Admins/Moderators',
+    'Used wall-hack cheating',
+    'Used Aim-bot cheating',
+    'Abuse of Voice Chat (Loud noises, play music, etc)',
+    'Intentional chat Spam',
+    'Intentional abuse of a known game/map bug']
+lengths = {
+    1: (('5 Minutes', 300),
+        ('30 Minutes', 1800),
+        ('1 Hour', 3600),
+        ('3 Hours', 10800),
+        ('12 Hours', 43200),
+        ('1 Day', 86400)),
+    2: (('3 Days', 259200),
+        ('1 Week', 604800),
+        ('1 Month', 2629746),
+        ('3 Months', 7889238),
+        ('6 Months', 15778476),
+        ('1 Year', 31556952))}
+
+def load():
+
+    # Create reasons file
+    sam.write_file(reasons_file, reasons)
 
 def unload():
     # Save databases
@@ -146,7 +167,7 @@ def ban_length_HANDLE(uid, choice, prev_page):
     page = sam.PageSetup('bm_ban_reason', ban_reason_HANDLE, 'bm_ban_length')
     page.title('Ban Manager')
     page.description('Choose ban reason:')
-    for line in _get_reasons():
+    for line in sam.read_file(reasons_file, reasons):
         page.option((choice, line), line)
     page.send(uid)
 
@@ -265,36 +286,6 @@ def _convert(date):
 def _save_data():
     sam.databases.save('ban_players_data', data)
     sam.databases.save('ban_logs', logs)
-
-def _get_reasons():
-    if not os.path.isfile(path_reasons):
-        _reasons_file()
-    lines = []
-    with open(path_reasons, 'r') as f:
-        for line in f.readlines():
-            line = line.strip().replace('\n', '')
-            if not line.startswith('//') and not line.startswith(' ') and line != '':
-                lines.append(line)
-    return lines
-
-def _reasons_file():
-    if not os.path.isfile(path_reasons):
-        with open(path_reasons, 'w') as f:
-            f.write('\n'.join([
-                    '// SAM - Ban Reasons File',
-                    '// ',
-                    '// Right down the reasons you want to be available for Admins to choose from',
-                    '// when banning a player. To do so:',
-                    '// - To add/remove a reason, simply add/remove a line',
-                    '// - When done editing the file simply save it, this file is read in',
-                    '//   real-time, you don\'t need to restart the server or reload the plugin.\n',
-                    'Disrespected/insulted players',
-                    'Disrespected/insulted Admins/Moderators',
-                    'Used wall-hack cheating',
-                    'Used Aim-bot cheating',
-                    'Abuse of Voice Chat (Loud noises, play music, etc)',
-                    'Intentional chat Spam',
-                    'Intentional abuse of a known game/map bug']))
 
 # Game Events
 def player_activate(ev):

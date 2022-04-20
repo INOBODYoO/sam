@@ -4,29 +4,8 @@
  
 Player: Test Subject
 Ban Admin: NOBODY
-Ban Date: 07/31/2021 at 03:45:29
+Ban Date: 04/20/2022 at 05:21:50
 Ban Length: 5 Minutes
-Expiration Date: 07/31/2021 at 03:50:29
-Ban Reason: Disrespected/insulted other players
---------------------------------------------------------------------------------
-Player: Test Subject
-Ban Admin: NOBODY
-Ban Date: 07/31/2021 at 03:49:01
-Ban Length: 5 Minutes
-Expiration Date: 07/31/2021 at 03:54:01
-Ban Reason: Disrespectful to Admins/Moderators instructions
---------------------------------------------------------------------------------
-Player: Test Subject
-Ban Admin: NOBODY
-Ban Date: 07/31/2021 at 04:04:14
-Ban Length: Permanent
-Expiration Date: Permanent
-Ban Reason: Disrespected/insulted other players
---------------------------------------------------------------------------------
-Player: Test Subject
-Ban Admin: NOBODY
-Ban Date: 07/31/2021 at 20:46:36
-Ban Length: 5 Minutes
-Expiration Date: 07/31/2021 at 20:51:36
-Ban Reason: Disrespected/insulted other players
+Expiration Date: 04/20/2022 at 05:26:50
+Ban Reason: Disrespected/insulted players
 --------------------------------------------------------------------------------
