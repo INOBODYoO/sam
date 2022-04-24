@@ -953,7 +953,7 @@ def import_addon(addon):
     addons = import_module('addons_monitor').addons
     if addon in addons.keys() and addons[addon]['state']:
         return import_module('addons/' + addon)
-    console('Error: Failed to import "%s" addon' % addon)
+    msg.console('SAM: Failed to import "%s" addon, unloaded' % addon)
     return None
 
 def delay_task(time, name, function, args=()):

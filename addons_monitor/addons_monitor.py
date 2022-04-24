@@ -96,7 +96,7 @@ def _addons_default_data():
         'example_addon': {
             'name': 'Example Addon',
             'version': 'dev',
-            'description': ('Developer Addon Template'),
+            'description': ('Developer Addon Template',),
             'state': False,
             'locked': False,
             'incompatible': ()
@@ -104,13 +104,13 @@ def _addons_default_data():
         'admins_chat': {
             'name': 'Admins Chat',
             'version': '1.0.b',
-            'description': ('Special chat for admins'),
+            'description': ('Special chat for admins',),
             'state': True,
             'locked': False,
             'incompatible': ()
         },
         'damage_display': {
-            'description': ('Displays damage taken/given to attackers/victims'),
+            'description': ('Displays damage taken/given to attackers/victims',),
             'locked': False,
             'name': 'Damage Display',
             'state': False,
@@ -118,7 +118,7 @@ def _addons_default_data():
             'incompatible': ()
         },
         'bots_manager': {
-            'description': ('Various options to control bots'),
+            'description': ('Various options to control bots',),
             'locked': False,
             'name': 'Bots Manager',
             'state': False,
@@ -126,7 +126,7 @@ def _addons_default_data():
             'incompatible': ()
         },
         'join_leave_messages': {
-            'description': ('Notifications when players join/leave the server'),
+            'description': ('Notifications when players join/leave the server',),
             'locked': False,
             'name': 'Join & Leave messages',
             'state': True,
@@ -134,7 +134,7 @@ def _addons_default_data():
             'incompatible': ()
         },
         'ban_manager': {
-            'description': ('Players banning management'),
+            'description': ('Players banning management',),
             'locked': True,
             'name': 'Ban Manager',
             'state': True,
@@ -142,7 +142,7 @@ def _addons_default_data():
             'incompatible': ()
         },
         'server_rules': {
-            'description': ('Page to display the server rules'),
+            'description': ('Page to display the server rules',),
             'locked': False,
             'name': 'Server Rules',
             'state': False,
@@ -150,110 +150,110 @@ def _addons_default_data():
             'incompatible': ()
         },
         'bomb_countdown': {
-            'description': ('Bomb countdown timer'),
+            'description': ('Bomb countdown timer',),
             'locked': False,
             'name': 'Bomb Countdown',
             'state': False,
             'version': '1.0',
             'incompatible': ()
-        }
-    }
-    '''
-        ,
-        ,
+        },
+        'no_collision': {
+            'description': ('Removes players physical collision',),
+            'locked': False,
+            'name': 'No Collision',
+            'state': False,
+            'version': 1.0,
+            'incompatible': ()
+        },
         'high_ping_kicker': {
-            'description': ('Kicks players after 3 warnings when the ping is too high'),
+            'description': ('Kick high ping players after a few warnings',),
             'locked': False,
             'name': 'High Ping Kicker',
-            'enabled': False,
-            'version': 1.0
+            'state': False,
+            'version': 1.0,
+            'incompatible': ()
         },
+    }
+    '''
         'map_manager': {
-            'description': ('Options to change server map'),
+            'description': ('Options to change server map',),
             'locked': False,
             'name': 'Map Manager',
             'enabled': True,
             'version': 1.0
         },
         'mute_system': {
-            'description': ('System to mute players chat/voice'),
+            'description': ('System to mute players chat/voice',),
             'locked': False,
             'name': 'Mute System',
             'enabled': True,
             'version': 1.0
         },
-        'no_player_collision': {
-            'description': ('Removes players collision'),
-            'locked': False,
-            'name': 'No Player Collision',
-            'enabled': False,
-            'version': 1.0
-        },
         'objects_spawner': {
-            'description': ('object_spawner_desc'),
+            'description': ('object_spawner_desc',),
             'locked': False,
             'name': 'Objects Spawner',
             'enabled': False,
             'version': 1.0
         },
         'round_end_sounds': {
-            'description': ('Plays a sound at the end of the round'),
+            'description': ('Plays a sound at the end of the round',),
             'locked': False,
             'name': 'Round End Sounds',
             'enabled': False,
             'version': 1.0
         },
         'round_start_money': {
-            'description': ('Gives X amount of money to players on round start'),
+            'description': ('Gives X amount of money to players on round start',),
             'locked': False,
             'name': 'Round Start Money',
             'enabled': False,
             'version': 1.0
         },
         'server_rules': {
-            'description': ('Simple page to display rules'),
+            'description': ('Simple page to display rules',),
             'locked': False,
             'name': 'Server Rules',
             'enabled': False,
             'version': 1.0
         },
         'sound_player': {
-            'description': ('Allows Admins to play sounds to players'),
+            'description': ('Allows Admins to play sounds to players',),
             'locked': False,
             'name': 'Sound Player',
             'enabled': False,
             'version': 1.0
         },
         'spawn_protection': {
-            'description': ('Protects players from any damage on spawn'),
+            'description': ('Protects players from any damage on spawn',),
             'locked': False,
             'name': 'Spawn Protection',
             'enabled': False,
             'version': 1.0
         },
         'teams_management': {
-            'description': ('Menu to manage teams or move player'),
+            'description': ('Menu to manage teams or move player',),
             'locked': True,
             'name': 'Teams Management',
             'enabled': True,
             'version': 1.0
         },
         'teams_switcher': {
-            'description': ('Switches both teams at X number of rounds'),
+            'description': ('Switches both teams at X number of rounds',),
             'locked': False,
             'name': 'Teams Switcher',
             'enabled': False,
             'version': 1.0
         },
         'rankme': {
-            'description': ('Ranking system (Kills, Deaths, KDR, etc)'),
+            'description': ('Ranking system (Kills, Deaths, KDR, etc)',),
             'locked': False,
             'name': 'RankME',
             'enabled': False,
             'version': 1.0
         },
         'auto_respawn': {
-            'description': ('Auto respawns players upon death'),
+            'description': ('Auto respawns players upon death',),
             'locked': False,
             'name': 'Auto Respawn',
             'enabled': False,

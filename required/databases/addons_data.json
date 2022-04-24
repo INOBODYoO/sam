@@ -6,7 +6,7 @@
         "incompatible": [],
         "locked": false,
         "name": "Admins Chat",
-        "state": true,
+        "state": false,
         "version": "1.0.b"
     },
     "ban_manager": {
@@ -16,8 +16,18 @@
         "incompatible": [],
         "locked": true,
         "name": "Ban Manager",
-        "state": true,
+        "state": false,
         "version": 1.0
+    },
+    "bomb_countdown": {
+        "description": [
+            "Bomb countdown timer"
+        ],
+        "incompatible": [],
+        "locked": false,
+        "name": "Bomb Countdown",
+        "state": false,
+        "version": "1.0"
     },
     "bots_manager": {
         "description": [
@@ -26,7 +36,7 @@
         "incompatible": [],
         "locked": false,
         "name": "Bots Manager",
-        "state": false,
+        "state": true,
         "version": 1.0
     },
     "damage_display": {
@@ -49,6 +59,16 @@
         "state": false,
         "version": "dev"
     },
+    "high_ping_kicker": {
+        "description": [
+            "Kick high ping players after a few warnings"
+        ],
+        "incompatible": [],
+        "locked": false,
+        "name": "High Ping Kicker",
+        "state": true,
+        "version": 1.0
+    },
     "join_leave_messages": {
         "description": [
             "Notifications when players join/leave the server"
@@ -59,6 +79,16 @@
         "state": false,
         "version": 1.0
     },
+    "no_collision": {
+        "description": [
+            "Removes players physical collision"
+        ],
+        "incompatible": [],
+        "locked": false,
+        "name": "No Collision",
+        "state": true,
+        "version": 1.0
+    },
     "server_rules": {
         "description": [
             "Page to display the server rules"
@@ -66,7 +96,7 @@
         "incompatible": [],
         "locked": false,
         "name": "Server Rules",
-        "state": true,
+        "state": false,
         "version": 1.0
     }
 }

@@ -14,7 +14,7 @@
     "bot_dont_shoot": "0",
     "bot_flipout": "0",
     "bot_join_after_player": "0",
-    "bot_quota": "6",
+    "bot_quota": "0",
     "bot_quota_mode": "fill",
     "bot_randombuy": "1",
     "bot_stop": "0",
