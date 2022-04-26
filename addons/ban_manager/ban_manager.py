@@ -66,7 +66,7 @@ def ban_manager_HANDLE(uid, choice, prev_page):
         sam.msg.hud(uid, text)
         addon_page(uid)
     if choice == 1:
-        page = sam.PageSetup('bm_player_list', player_list_HANDLE, 'ban_manager')
+        page = sam.PageSetup('bm_player_list', player_list_HANDLE, prev_page)
         page.title('Ban Manager')
         page.description('Choose a player to ban:')
         active   = []
@@ -104,7 +104,7 @@ def ban_manager_HANDLE(uid, choice, prev_page):
         if not data.keys():
             r(uid, 'Currently, there aren\'t any players banned.')
             return
-        page = sam.PageSetup('banned_list', ban_profile, 'ban_manager')
+        page = sam.PageSetup('banned_list', ban_profile, prev_page)
         page.title('Ban Manager')
         page.description('Choose a player:')
         for k, v in data.items():
@@ -115,7 +115,7 @@ def ban_manager_HANDLE(uid, choice, prev_page):
         if not logs.keys():
             r(uid, 'There aren\'t any bans registered yet')
             return
-        page = sam.PageSetup('ban_history_year', ban_history_year_HANDLE, 'ban_manager')
+        page = sam.PageSetup('ban_history_year', ban_history_year_HANDLE, prev_page)
         page.title('Ban Manager')
         page.description('Choose a year:')
         for i in sorted(logs.keys()):
@@ -124,7 +124,7 @@ def ban_manager_HANDLE(uid, choice, prev_page):
 
 def ban_profile(uid, info, prev_page=False):
     sid  = info['steamid']
-    page = sam.PageSetup('ban_profile', ban_profile_HANDLE, 'ban_manager')
+    page = sam.PageSetup('ban_profile', ban_profile_HANDLE, prev_page)
     page.title('Ban Profile')
     page.newline('NAME: ' + info['name'],
                  'STEAMID: ' + sid,
@@ -149,7 +149,7 @@ def ban_profile_HANDLE(uid, choice, prev_page):
     addon_page(uid)
 
 def player_list_HANDLE(uid, choice, prev_page):
-    page = sam.PageSetup('bm_ban_length', ban_length_HANDLE, 'bm_player_list')
+    page = sam.PageSetup('bm_ban_length', ban_length_HANDLE, prev_page)
     page.title('Ban Manager')
     page.description('Choose ban length:')
     lvl = sam.admins.can(uid, 'ban_level')
@@ -164,7 +164,7 @@ def player_list_HANDLE(uid, choice, prev_page):
     page.send(uid)
 
 def ban_length_HANDLE(uid, choice, prev_page):
-    page = sam.PageSetup('bm_ban_reason', ban_reason_HANDLE, 'bm_ban_length')
+    page = sam.PageSetup('bm_ban_reason', ban_reason_HANDLE, prev_page)
     page.title('Ban Manager')
     page.description('Choose ban reason:')
     for line in sam.read_file(reasons_file, reasons):
@@ -238,7 +238,7 @@ def ban_history_year_HANDLE(uid, choice, prev_page):
         del logs[choice]
         addon_page(uid)
         return
-    page = sam.PageSetup('ban_history_month', ban_history_month_HANDLE, 'ban_history_year')
+    page = sam.PageSetup('ban_history_month', ban_history_month_HANDLE, prev_page)
     page.title('Ban Manager')
     page.description('Choose a month:')
     for i in ('January', 'February', 'March', 'April', 'May', 'June',

@@ -13,7 +13,7 @@ def loop():
     sam.delay_task(30, 'sam_hpk_loop', loop, ())
 
     for ply in sam.player_list():
-        if ply.ping >= 0:
+        if ply.ping >= 80:
             sid = ply.steamid
 
             if sid not in warnings.keys():
@@ -26,7 +26,7 @@ def loop():
                 p.title('High Ping Kicker')
                 p.newline('Warning: Your ping is too high!')
                 p.newline('This is your %s warning.' % msg[warnings[sid]])
-                p.timeout(10)
+                p.timeout = 10
                 p.send(ply)
                 continue
             else:

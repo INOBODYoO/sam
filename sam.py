@@ -45,7 +45,7 @@ print('[SAM]   - Initializing Core Systems')
 class _Cache:
     def __init__(self):
         self.pages = {}
-        self.pages_users = {}
+        self.users_pages = {}
         self.sounds = {}
 cache = _Cache()
 
@@ -350,9 +350,11 @@ class _messages_system:
     def center(self, users, text):
         usermsg.centermsg(self._sort_users(users), text)
 
-    def side(self, users, tag=True, *text):
-        text = '[ SAM ]\n' if tag else '' + '\n'.join(map(str, text))
-        usermsg.keyhint(self._sort_users(users), self._compile(text, remove=True, special=False))
+    def side(self, users, *text):
+        usermsg.keyhint(self._sort_users(users),
+                        self._compile('\n'.join(map(str, text)),
+                                      remove=True,
+                                      special=False))
 
     def VGUIPanel(self, users, panel_name, visible, data={}):
         usermsg.showVGUIPanel(self._sort_users(users), panel_name, visible, data)
@@ -573,8 +575,13 @@ class PageSetup(object):
     def __init__(self, pageid, callback=None, previous_page=None):
         self.pageid = pageid
         self.callback = callback
-        self.previous_page = previous_page
+        self.previous_page = False
         self.previous_subpage = 1
+        if isinstance(previous_page, str):
+            self.previous_page = previous_page
+        elif previous_page:
+            self.previous_page = previous_page.pageid
+            self.previous_subpage = previous_page.subpage
         self.title_text = False
         self.header_text = True
         self.footer_text = False
@@ -645,8 +652,8 @@ class PageSetup(object):
         debug(2, '   * Settting up Lines & Options')
         option = 0
         self.blocked_options = []
-        if self.maxlines > 7:
-            self.maxlines = 7
+        if self.maxlines > 8:
+            self.maxlines = 8
         for line in self.subpages[subpage]:
             if self.maxlines and option == self.maxlines:
                 break
@@ -695,7 +702,7 @@ class PageSetup(object):
             debug(2, '   %s      - %s' % (user, getsid(user)))
             debug(2, '   -------------------------')
             _cancel_page_refresh(uid)
-            cache.pages_users[uid] = {'active': self.pageid, 'subpage': subpage}
+            cache.users_pages[uid] = {'active': self.pageid, 'subpage': subpage}
             es.showMenu(self.timeout, uid, display.encode('utf-8'))
             if self.timeout == 0:
                 delay_task(1, 'refresh_%s_page' % uid, self._refresh_page, uid)
@@ -704,14 +711,14 @@ class PageSetup(object):
     def send_option(self, uid, option):
         option = self.get_option(option)
         self.send(uid, option['subpage'])
-        handle_choice(option['choice'], int(uid))
+        handle_choice(option['choice'], uid)
 
     def get_option(self, option, subpage=None):
         if not subpage:
-            for pg in self.subpages.keys():
-                for option in self.page_options(pg):
+            for page in self.subpages.keys():
+                for option in self.page_options(page):
                     if option['object'] == option:
-                        subpage = pg
+                        subpage = page
         options = self.page_options(subpage)
         if isinstance(option, int):
             return options[option - 1]
@@ -726,9 +733,9 @@ class PageSetup(object):
         return [i for i in self.subpages[subpage] if isinstance(i, dict)]
 
     def _refresh_page(self, user):
-        if user not in cache.pages_users.keys():
+        if user not in cache.users_pages.keys():
             return
-        page = cache.pages_users[int(user)]
+        page = cache.users_pages[int(user)]
         if page['active'] in cache.pages.keys():
             cache.pages[page['active']].send(user, page['subpage'])
 
@@ -762,7 +769,7 @@ def load():
 def unload():
 
     # Close active menus from users
-    for user in cache.pages_users.keys():
+    for user in cache.users_pages.keys():
         handle_choice(10, user, True)
         msg.hud(user, 'Your page was closed since SAM is unloading.')
 
@@ -771,7 +778,7 @@ def unload():
 
     # Clear cache
     cache.pages.clear()
-    cache.pages_users.clear()
+    cache.users_pages.clear()
 
     # Delete core module commands
     cmds.delete('sam')
@@ -1003,8 +1010,8 @@ def handle_choice(choice, user, force_close=False):
         _process_user_choice(user, choice)
         return
     es.cexec(user, 'slot10')
-    if user in cache.pages_users.keys():
-        del cache.pages_users[user]
+    if user in cache.users_pages.keys():
+        del cache.users_pages[user]
         _cancel_page_refresh(user)
 
 def _cancel_page_refresh(tar):
@@ -1015,12 +1022,12 @@ def _cancel_page_refresh(tar):
 
 def _process_user_choice(uid, choice):
     _cancel_page_refresh(uid)
-    if uid not in cache.pages_users.keys():
+    if uid not in cache.users_pages.keys():
         return
-    user = cache.pages_users[uid]
+    user = cache.users_pages[uid]
     active_page = user['active']
     active_subpage = user['subpage']
-    del cache.pages_users[uid]
+    del cache.users_pages[uid]
     if active_page not in cache.pages.keys():
         return
     page = cache.pages[active_page]
@@ -1042,6 +1049,8 @@ def _process_user_choice(uid, choice):
                 self.subpage = d
             def return_page(self, uid):
                 self.object.send(uid, self.subpage)
+            def return_new(self, uid):
+                cache.pages[self.pageid].send(uid, self.subpage)
         page.callback(uid, page.get_option(choice, active_subpage)['object'],
                       PageInfo(page.pageid, page, choice, active_subpage))
     elif choice == 8 and active_subpage > 1:
@@ -1052,10 +1061,12 @@ def _process_user_choice(uid, choice):
         page.send(uid, active_subpage)
 
 # Game Events
+def server_shutdown(ev): es.server.cmd('es_unload sam')
+
 def es_map_start(ev):
     # Clear Page System Cache
     cache.pages.clear()
-    cache.pages_users.clear()
+    cache.users_pages.clear()
 
     # Remove all unnecessary chat filters
     for name in chat_filters.filters.keys():
@@ -1079,8 +1090,8 @@ def player_disconnect(ev):
     sid = ev['networkid']
     if uid in cache.sounds.keys():
         del cache.sounds[uid]
-    if uid in cache.pages_users.keys():
-        del cache.pages_users[uid]
+    if uid in cache.users_pages.keys():
+        del cache.users_pages[uid]
     for name in chat_filters.filters.keys():
         _filter = chat_filters.filters[name]
         if uid in _filter.users:

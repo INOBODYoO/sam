@@ -8,10 +8,8 @@ sam = es.import_addon('sam')
 addons = sam.databases.load('addons_data')
 
 def load():
-
     # Must load empty script
     es.load('sam/addons')
-
     # Update & Initialize Addons
     for addon, data in _addons_default_data().items():
         if addon not in addons:
@@ -23,15 +21,12 @@ def load():
             es.load('sam/addons/' + addon)
 
 def unload():
-
     # Unload Addons
     for addon in addons.keys():
         if addons[addon]['state']:
             es.unload('sam/addons/' + addon)
-
     # Save database
     sam.databases.save('addons_data', addons)
-
     # Unload empty script
     es.unload('sam/addons')
 
@@ -39,43 +34,43 @@ def module_page(uid, send=True):
     if not sam.admins.can(uid, 'addons_monitor'):
         sam.home_page(uid)
         return
-    page = sam.PageSetup('addons_monitor', addons_monitor_HANDLE, 'home_page')
-    page.title('Addons Monitor')
+    p = sam.PageSetup('addons_monitor', addons_monitor_HANDLE, 'home_page')
+    p.title('Addons Monitor')
     for name in sorted(addons.keys()):
         addon = addons[name]
         text = addon['name'] + ' '
         if addon['state']:
             text = text + '[running]'
-        page.option(name, text, addon['locked'] and not sam.admins.can(uid, 'super_admin'))
-    page.footer('Locked Addons can only be',
+        p.option(name, text, addon['locked'] and not sam.admins.can(uid, 'super_admin'))
+    p.footer('Locked Addons can only be',
                 'accessed by Super Admins')
-    if send:
-        page.send(uid)
+    if send: p.send(uid)
 
-def addons_monitor_HANDLE(uid, choice, prev_page=None):
+def addons_monitor_HANDLE(uid, choice, prev_page):
     addon = addons[choice]
-    page = sam.PageSetup('monitor', monitor_HANDLE, 'addons_monitor')
-    page.title('Addons Monitor')
-    page.description(' - NAME: ' + addon['name'],
+    p = sam.PageSetup('monitor', monitor_HANDLE, prev_page)
+    p.title('Addons Monitor')
+    p.description(' - NAME: ' + addon['name'],
                      ' - VERSION: %s' % addon['version'],
-                     ' - DESCRIPTION:\n' + '\n'.join(addon['description']))
-    page.newline('Toggle Addon State:')
-    page.option((choice, 'state'), '[enabled] |  disabled'\
+                     ' - DESCRIPTION:\n' + '\n'.join(addon['description'])
+                     if addon['description'] else '')
+    p.newline('Toggle Addon State:')
+    p.option((choice, 'state', prev_page), '[enabled] |  disabled'\
                 if addon['state'] else 'enabled  | [disabled]')
     if sam.admins.can(uid, 'super_admin'):
-        page.newline('Toggle Lock State:')
-        page.option((choice, 'locked'), '[locked] |  unlocked'
+        p.newline('Toggle Lock State:')
+        p.option((choice, 'locked', prev_page), '[locked] |  unlocked'
                     if addon['locked'] else 'locked   | [unlocked]')
     if choice in sam.settings.default['Addons Settings']:
-        page.separator()
-        page.option((choice, 'settings_help'), 'Settings Help Window')
+        p.separator()
+        p.option((choice, 'settings_help', prev_page), 'Settings Help Window')
     if bool(addon['incompatible']):
-        page.footer('Incompatible Addons:\n',
+        p.footer('Incompatible Addons:\n',
                     ', '.join(addon['incompatible']))
-    page.send(uid)
+    p.send(uid)
 
 def monitor_HANDLE(uid, choice, prev_page):
-    addon, key = choice
+    addon, key, previous = choice
     if key == 'settings_help':
         sam.settings.info_window(uid, addon)
     else:
@@ -89,7 +84,7 @@ def monitor_HANDLE(uid, choice, prev_page):
         addons[addon][key] = not addons[addon][key]
     sam.home_page(uid)
     sam.handle_choice(3, uid)
-    addons_monitor_HANDLE(uid, addon)
+    addons_monitor_HANDLE(uid, addon, previous)
 
 def _addons_default_data():
     return {
@@ -169,6 +164,22 @@ def _addons_default_data():
             'description': ('Kick high ping players after a few warnings',),
             'locked': False,
             'name': 'High Ping Kicker',
+            'state': False,
+            'version': 1.0,
+            'incompatible': ()
+        },
+        'tests_addon': {
+            'description': False,
+            'locked': True,
+            'name': 'Tests Addon',
+            'state': True,
+            'version': 1.0,
+            'incompatible': ()
+        },
+        'objects_spawner': {
+            'description': ('Tool to spawn, move, rotate & color objects in real-time'),
+            'locked': False,
+            'name': 'Objects Spawner',
             'state': False,
             'version': 1.0,
             'incompatible': ()
