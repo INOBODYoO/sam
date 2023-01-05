@@ -1,5 +1,26 @@
 # Introduction
 
+S.A.M stands for Server Administration Menu, began to be my very first Python project and
+my starting point in programming, was mostly used privately to serve my own needs, but
+later on a public version was released. Being very new to programming, and of course to Python
+SAM wasn't really built the best way possible, but the best way I could , many mistakes
+were made throughout its many iterations, making it really unstable and unreliable,
+nevertheless I was always proud of my work since I was pretty much self-taught through the
+process of learning skills and applying them.
+
+The goal always stood the same, as an "All-In-One independent server modding & administration tool".
+SAM is based on Mani-Admin Menu for its unique Player Administration tools and its built-in
+Admins system, and on SourceMod for its unique and extensive and flexible list of plugins
+for any kind of server, the idea being that SAM would take the best features of both into
+one single plugin.
+
+Note: While not entirely true, since SAM requires EventScripts framework and
+      simplejson (shipped together by default) to work, SAM ultimately avoids being
+      dependent of other Addons or libraries but these two being the biggest exceptions.
+
+SAM's second ultimate goal was to be the most user friendly and independent plugin ever.
+- User-Friendly: 
+
 SAM's remastered version is a complete re-work of an older version of SAM, mostly used in
 private, even though EventScripts is unmaintained and outdated and CS:S itself is no longer
 the game it used to be, this version is just to be on the record as one of the biggest
@@ -7,29 +28,29 @@ scriptigng projects ever done by me, and my starting point in programming.
 
 #### Remastered Version Note:
 Since so much has changed from the previous versions of the plugin, this changelog will mostly
-contain explanations of SAM's top features, addons, and core systems.
+containing explanations of SAM's top features, addons, and core systems.
 
-# [1.0.0] - (Remastered) - [2021 / 2022]
+# [1.0.0] - (Remastered) - [2021 / 2023]
 
 ## [CORE MODULE] - sam.py
-(Responsible for most important modules, systems and functions)
+(Responsible for handling main modules, systems and functions for the whole script to work)
 
 # Page System:
 > What are pages?
 > 
-> Source games have these popups or "radio popups", a good example is team radios where players
-> use quick sound communications to teamates to send instructions or call out reports in game.
-> SAM uses these popups functionalities to create what I call pages, and therefore create menus
-> with options, all kinds of usefull informations and functionalities, all this in-game of course. 
+> Source games have these "radio popups", a good example is team radios where players
+> use quick sound communications to teammates to send instructions or call out reports in game.
+> SAM uses these popups to create what I call pages, and therefore create menus
+> with options, all kinds of useful information and functionalities, all this in-game of course. 
 > 
-> Previously SAM used a EventScripts popuplib's library to create pages, which the library itself
-> was a buggy mess, and limited SAM too much in what SAM could do.
-> The new Pages System is now built-in SAM and no longer requires ES popuplib, this being
-> the most major change to the plugin and substantially improving SAM's capabilities.
+> Previously SAM used a EventScripts popuplib's library to create pages, which the library
+> itself was a buggy mess, and limited SAM too much in what SAM could and needed to do.
+> The new Pages System is now built-in into SAM and no longer requiring ES popuplib,
+> this being the biggest change to the plugin and substantially improving SAM's capabilities.
 
-+ ES Popuplib library is no longer used.
+- ES Popuplib library is no longer used.
 + Pages new features:
-  * Header: Top line of every page displaying SAM's installed version and a toggleable local clock.
+  * Header: Top line of every page displaying SAM's installed version and a local clock.
   * Title: Mostly to easily identify to what module, system or addon the current page belongs to.
   * Description: Usually to describe the content of the page.
   * Lines: Simply lines of text, however the biggest change is that now lines can be placed
@@ -38,7 +59,7 @@ contain explanations of SAM's top features, addons, and core systems.
              (0 represents the number 10 in popups, used mostly as the Close Options and/or Previous Page)
   * Blocked Options: Options can be block, unabling the user to choose them.
                      (i.e: When an Addon State was locked by a Super Admin, a regular admin can still
-                      see the Addon listed, however can not change its state because the option is blocked)
+                      see the Addon listed, however can not change its state because the add_option is blocked)
   * Seperators: Seperator lines.
   * Footer: Usually for informational notes.
 + Added support for toggle-able options, which was previously harder to achieve.
@@ -85,7 +106,7 @@ contain explanations of SAM's top features, addons, and core systems.
 - Other settings types must be changed in the respective file with the required/settings folder
 - All changes made either in game or through the file happen in real-time,
   restarts or reloads are not required.
-- In all Settings pages, on the bottom of the page theres a Help option, when chosen
+- In all Settings pages, on the bottom of the page theres a Help add_option, when chosen
   a Info type message will be sent with the setting file of the respective module/addon,
   where the user can learn all settings and their descriptions of that module/addon.
 
@@ -110,9 +131,9 @@ contain explanations of SAM's top features, addons, and core systems.
 	- Change Immunity Level
 	- Change all other modules/addons permissions
 + In the footer of the module page theres now a counter of the current online Admins & Super Admins
-+ Added a Group Members option when editing an Admin Group, to easily assign or remove
++ Added a Group Members add_option when editing an Admin Group, to easily assign or remove
   multiple Admins to/from a Group.
-+ Added a Group Color option when editing an Admin Group to choose a color to represent
++ Added a Group Color add_option when editing an Admin Group to choose a color to represent
   the selected group. This color is used to colorize the group name in the game chat,
   by default a random color will be assigned to the group when created
 * Improved !admins command, Super Admins will be listed first following with regular Admins,
@@ -135,7 +156,7 @@ contain explanations of SAM's top features, addons, and core systems.
 + Locked Addons can only be accessed by Super Admins, meaning that Admins with the
   Addons Monitor flag cannot accessed.
 + If an Addon has its own settings, after the first time the Addon is loaded up, the same
-  Settings Help Window option will appear in the Addon profile page.
+  Settings Help Window add_option will appear in the Addon profile page.
 
 # Addons Section:
 (Not all Addons will be mentioned below, but only the ones who received major changes)
@@ -143,8 +164,8 @@ contain explanations of SAM's top features, addons, and core systems.
 [Admins Chat]
 
 + Admins default chat colour is now in white.
-+ Admins can use @ for special functions:
-	- Starting team messages with one @ will send the message in private to all other Admins.
++ Admins can use @ before any in-game message for special funtions such as:
+	- Starting team message with one @ will send the message in private to all other Admins.
 	- Starting an all-chat with @ will send a @SERVER message, anyone in the server can see it.
 	- Starting an all-chat with @@ will send a center message, anyone in the server can see it.
 + Admins can use color codes in their own messages.
@@ -152,7 +173,7 @@ contain explanations of SAM's top features, addons, and core systems.
 
 [Ban Manager Addon]
 
-+ Ban option now lists 2 groups of players, Online players and Offline players, Offline players
++ Ban add_option now lists 2 groups of players, Online players and Offline players, Offline players
   being players that have been in the server before but aren't currently active.
   This allows Admins to ban players even when they are not in the server.
 + Ban lengths are now sorted and grouped by Ban Levels, and the Admin's ban level will be
@@ -160,5 +181,5 @@ contain explanations of SAM's top features, addons, and core systems.
 + Ban Profile page now lists the player name, SteamID, the date the ban was given,
   ban expiration date + hour, the Admin that gave the ban and the ban reason.
 + Ban Logs are no longer stored in files, but rather in their own database.
-+ Ban History option now sorts bans by year + month.
++ Ban History add_option now sorts bans by year + month.
 + Ban logs are now shown in a Info type message.

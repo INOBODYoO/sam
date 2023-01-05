@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import es
 import psyco
+
 psyco.full()
 
 sam = es.import_addon('sam')
@@ -21,30 +22,26 @@ def loop():
             warnings[sid] += 1
 
             if warnings[sid] < 4:
-                p = sam.PageSetup('high_ping_kicker')
-                p.header_text = False
-                p.title('High Ping Kicker')
-                p.newline('Warning: Your ping is too high!')
-                p.newline('This is your %s warning.' % msg[warnings[sid]])
-                p.timeout = 10
-                p.send(ply)
+                page = sam.Menu('high_ping_kicker')
+                page.header_text = False
+                page.title('High Ping Kicker')
+                page.add_line('Warning: Your ping is too high!')
+                page.add_line('This is your %s warning.' % msg[warnings[sid]])
+                page.timeout = 10
+                page.send(ply)
                 continue
             else:
-                ban_manager = sam.import_addon('ban_manager')
+                ban_manager = sam.addons_monitor.import_addon('ban_manager')
                 if ban_manager:
-                    ban_manager.ban({
-                        'steamid': sid,
-                        'name': ply.name,
-                        'admin': 'SAM (High Ping Kicker)',
-                        'date': sam.get_time('%m/%d/%Y at %H:%M:%S'),
-                        'expiry_date': 300 + sam.timestamp(),
-                        'length_text': '5 Minutes',
-                        'reason': 'High Ping',
-                        })
+                    ban_manager.ban({'steamid': sid,
+                                     'name': ply.name,
+                                     'admin': 'SAM (High Ping Kicker)',
+                                     'date': sam.get_time('%m/%d/%Y at %H:%M:%S'),
+                                     'expiry_date': 300 + sam.timestamp(),
+                                     'length_text': '5 Minutes',
+                                     'reason': 'High Ping'})
                 else:
-
-                    ply.kick('You were kicked from the server! (Reason: High Ping)'
-                             )
+                    ply.kick('You were kicked from the server! (Reason: High Ping)')
 
 
 def unload():

@@ -1,40 +1,25 @@
-import es
-import psyco
-psyco.full()
+import random
+import usermsg
 
-sam = es.import_addon('sam')
-sep = '-' * 20
-dat = {}
 
-# Load Block
-def load():
-    for user in sam.userid_list('#all'): _add(user)
-
-# Game Events
 def player_hurt(ev):
-    dmg = ev['dmg_health']
-    for user in (ev['userid'], ev['attacker']):
-        user = int(user)
-        if user in dat.keys():
-            dat[user].append('-%s from %s' % (dmg, ev['es_attackername'])
-                             if user == int(ev['userid']) else
-                             '-%s to %s' % (dmg, ev['es_username']))
-            if len(dat[user]) == 6:
-                del dat[user][0]
-            sam.msg.side(user, False, '\n'.join(sorted(dat[user], reverse=True)))
+    # get the player who was hurt
+    victim = int(ev['userid'])
 
-def player_activate(ev): _add(int(ev['userid']))
+    # get the player who inflicted the damage
+    attacker = int(ev['attacker'])
 
-def player_disconnect(ev): _clear(int(ev['userid']))
+    # get the amount of damage taken
+    damage = int(ev['dmg_health'])
 
-def player_death(ev): _clear(int(ev['userid']))
+    # message to display
+    attacker_message = '+%s' % damage
+    hurt_message = '-%s' % damage
 
-def round_end(ev):
-    for user in dat.keys(): _clear(user)
+    # position of the message on the screen
+    x = random.uniform(0.4, 0.6)
+    y = random.uniform(0.8, 0.9)
 
-# Functions
-def _add(user):
-    if user not in dat.keys(): dat[user] = []
-
-def _clear(user):
-    if user in dat.keys(): del dat[user][:]
+    # send messages to both players, one showing the damage taken, and the other given
+    usermsg.hudmsg(attacker, attacker_message, 0, x, y, r1=0, g1=255, b1=0, holdtime=1.8)
+    usermsg.hudmsg(victim, hurt_message, 1, x, y, r1=255, g1=0, b1=0, holdtime=1.8)

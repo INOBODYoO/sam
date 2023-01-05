@@ -1,5 +1,10 @@
 *.pyc
 *.json
 *.txt
-*/__init__.py
-*/__init__.pyc
+*__init__.py
+addons/tests_addon/tests_addon.py
+dis/
+required/
+*.name
+*.xml
+*.iml

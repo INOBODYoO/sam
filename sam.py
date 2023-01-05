@@ -1,93 +1,113 @@
 from __future__ import with_statement
-from datetime import datetime
-import simplejson as json
+
+import os
 import random as rdm
 import time
-import os
-import es
+from datetime import datetime
+
 import cmdlib
-import usermsg
-import playerlib
+import es
 import gamethread
+import playerlib
 import psyco
+import simplejson as json
+import usermsg
 psyco.full()
 
 # Script Info
 plugin = es.AddonInfo()
-plugin.name           = 'S.A.M (Server Administration Menu) [Remastered]'
-plugin.version        = '1.0-Alpha'
-plugin.basename       = 'sam'
-plugin.author         = 'NOBODY'
-plugin.description    = 'All-In-One players, addons & server administration tool'
-plugin.url            = 'https://github.com/INOBODYoO/sam'
+plugin.name = 'S.A.M (Server Administration Menu) [Remastered]'
+plugin.version = '0.0.1'
+plugin.basename = 'sam'
+plugin.author = 'NOBODY'
+plugin.description = 'AllInOne tool for addons monitoring & server/players administration'
+plugin.url = 'https://github.com/INOBODYoO/sam'
 plugin.developer_mode = 1
 
-""" Developer Modes Levels:
+''' Developer Mode Levels:
     1 = Python Exceptions / eventscripts_debug set to 0
     2 = Pages Setup Debug
-    3 = GodMode (Anyone can access anything in the menu even if not a Super or Regular Admin)
-    4 = Prints all settings updates to console """
-def debug(lvl, *msg):
+    3 = Sandbox Mode (Anyone can access anything in the menu
+                      even if not a Super or Regular Admin)
+    4 = Prints all settings updates to console '''
+
+
+def debug(lvl, *message):
     if lvl == plugin.developer_mode:
-        for line in msg:
+        for line in message:
             print('[SAM][DEBUG] %s' % line)
+
+
 # Turn off ES debug completely (if SAM debug is)
-es.server.cmd('eventscripts_debug %s' % '0' if bool(plugin.developer_mode) else '-1')
+es.server.cmd('eventscripts_debug %s' % ('0' if bool(plugin.developer_mode) else '-1'))
 
 # Global Variables
-MODULES = ('players_manager', 'admins_manager', 'addons_monitor', 'settings')
+MODULES = ('players_manager', 'admins_manager', 'addons_monitor', 'settings_manager')
 FILTERS = ('#all', '#human', '#ct', '#t', '#alive', '#dead', '#spec', '#bot')
 HOME_PAGE_ADDONS = []
 
 # Core Module Systems
 print('[SAM]   - Initializing Core Systems')
 
+
 class _Cache:
     def __init__(self):
-        self.pages = {}
-        self.users_pages = {}
+        self.menus = {}
+        self.users_active_menu = {}
         self.sounds = {}
+
+
 cache = _Cache()
 
-class _path:
+
+class _Path:
     def __init__(self):
         self.core = es.getAddonPath('sam')
-        self.sounds = 'cstrike/sound/sam_sounds'
         self.addons = self.core + '/addons/'
+        self.sounds = 'cstrike/sound/sam_sounds/'
         self.settings = self.core + '/required/settings.json'
         self.databases = self.core + '/required/databases/'
         self.info_window_file = self.core + '/required/info_window (ignore this file).txt'
-path = _path()
 
-class _database_system:
+
+path = _Path()
+
+
+class _DatabaseSystem:
     # Create directories
-    if not os.path.exists(path.databases):
-        os.makedirs(path.databases)
-    if not os.path.exists(path.databases + 'addons/'):
-        os.makedirs(path.databases + 'addons/')
+    def __init__(self):
+        if not os.path.exists(path.databases):
+            os.makedirs(path.databases)
+        if not os.path.exists(path.databases + 'addons/'):
+            os.makedirs(path.databases + 'addons/')
 
-    def load(self, file, bypass=False):
+    @staticmethod
+    def load(db_file, bypass=False):
         if not bypass:
-            file = path.databases + file + '.json'
-        if os.path.isfile(file):
-            with open(file, 'r') as f:
+            db_file = path.databases + db_file + '.json'
+        if os.path.isfile(db_file):
+            with open(db_file, 'r') as f:
                 return json.load(f)
         return {}
 
-    def save(self, file, data, bypass=False):
+    @staticmethod
+    def save(db_file, data, bypass=False):
         if not bypass:
-            file = path.databases + file + '.json'
-        if not bool(data) and os.path.isfile(file):
-            os.remove(file)
+            db_file = path.databases + db_file + '.json'
+        if not bool(data) and os.path.isfile(db_file):
+            os.remove(db_file)
             return
         try:
-            with open(file, 'w') as f:
+            with open(db_file, 'w') as f:
                 json.dump(data, f, indent=4, sort_keys=True)
         except AttributeError:
             return
-databases = _database_system()
 
-class _settings_system:
+
+databases = _DatabaseSystem()
+
+
+class _SettingsSystem:
 
     def __init__(self):
         self.gen = 'General Settings'
@@ -105,18 +125,22 @@ class _settings_system:
                     'default': True,
                 },
                 'enable_!rcon_command': {
-                    'desc': ['Enables !rcon command. (Requires "Rcon Command" permission)',
-                             'Allow Admins to execute almost any kind of server',
-                             'commands/variables through the game chat'],
+                    'desc': [
+                        'Enables !rcon command. (Requires "Rcon Command" permission)',
+                        'Allow Admins to execute almost any kind of server',
+                        'commands/variables through the game chat'
+                    ],
                     'default': True,
                 },
                 'enable_!admins_command': {
                     'desc': ['Opens a page with a list of all Admins currently online'],
                     'default': True,
                 },
-                'enable_pages_clock': {
-                    'desc': ['Displays a clock in the top righ corner of all pages.',
-                             '(Local time, which is the time from where the server is hosted)'],
+                'enable_menus_clock': {
+                    'desc': [
+                        'Displays a clock in the top right corner of all pages.',
+                        '(Local time, which is the time from where the server is hosted)'
+                    ],
                     'default': True,
                 },
                 'pages_separator_line_length': {
@@ -131,39 +155,47 @@ class _settings_system:
         self._save(self._load())
 
     def __repr__(self):
-        return str(self.config)
+        return str(self.__call__())
 
     def __str__(self):
         return self.__repr__()
 
-    def __call__(self, arg):
-        data = self._load()
-        class config_class(object):
+    def __call__(self, arg=None):
+        config = self._load()
+
+        class Config(object):
             def __init__(self, obj):
                 self.__dict__.update(obj.copy())
+
             def __getattr__(self, attr):
                 return self.__dict__[attr]
-        if arg in data[self.gen].keys():
-            return data[self.gen][arg]
-        elif arg in data[self.add].keys():
-            return config_class(data[self.add][arg])
-        return config_class(data[self.gen])
+
+        if arg is None:
+            return Config(config[self.gen])
+        elif arg in config.keys():
+            return config[arg]
+        elif arg in config[self.gen].keys():
+            return config[self.gen][arg]
+        elif arg in config[self.add].keys():
+            return Config(config[self.add][arg])
 
     def _load(self):
         data = databases.load(path.settings, True)
         if not data:
             data['Addons Settings'] = {}
-            data[self.gen] = dict([(k, v['default']) for k, v in self.default[self.gen].items()])
-        dft = self.default[self.gen]
-        cfg = data[self.gen]
-        if cfg == dft:
+            data[self.gen] = dict([(k, v['default'])
+                                   for k, v in self.default[self.gen].items()])
+        default = self.default[self.gen]
+        config = data[self.gen]
+        if config == default:
             return data
-        for cmd in dft.keys():
-            if cmd not in cfg.keys():
-                cfg[cmd] = dft[cmd]['default']
+        for cmd in default.keys():
+            if cmd not in config.keys():
+                config[cmd] = default[cmd]['default']
         return data
 
-    def _save(self, data):
+    @staticmethod
+    def _save(data):
         databases.save(path.settings, data, True)
 
     def addon_config(self, addon, config):
@@ -179,7 +211,6 @@ class _settings_system:
 
     def info_window(self, uid, key):
         data = self._load()
-        obj  = None
         if key == self.gen:
             data = data[self.gen].copy()
             obj = self.default[key].copy()
@@ -187,26 +218,23 @@ class _settings_system:
             data = data[self.add][key].copy()
             obj = self.default[self.add][key].copy()
         else:
-            msg.hud(uid, 'Error: could not retrieve these settings information.')
+            msg.hud(uid, 'Error: Could not retrieve %s settings.' % title(key))
             return
-        lines = ['This window is for informational purposes only and content cant be changed.',
-                 'To modify these settings and more you need to access the Settings file under:',
-                 'cstrike/addons/eventscripts/sam/required/settings.json\n',
-                 'Toggle-able options can be changed from the menu itself, other settings of',
-                 'digit or string (text) type values, can only be changed from the settings file',
-                 'mentioned above, however changes from the file happen in real-time, meaning',
-                 'that server-restarts or SAM reloads ARE NOT REQUIRED for changes to take effect',
-                 '\n%s' % (90 * '-')]
+        lines = []
         for k, v in obj.items():
             lines.extend(('[ %s ]' % title(k),
                           '- Description:\n%s' % '\n'.join(v['desc']),
                           '- Default Value: %s' % v['default'],
                           '- Current Value: %s\n' % data[k]))
-        msg.info(uid, key if key == self.gen else title(key) + ' | Settings Help Page', *lines)
+        msg.info(uid,
+                 key if key == self.gen else title(key) + ' | Settings Help Page',
+                 *lines)
 
-settings = _settings_system()
 
-class _chat_filters_system:
+settings = _SettingsSystem()
+
+
+class _ChatFiltersSystem:
 
     def __init__(self):
         self.filters = {}
@@ -229,8 +257,10 @@ class _chat_filters_system:
     def remove(self, name, block):
         if name in self.filters.keys():
             del self.filters[name]
-        try: es.addons.unregisterSayFilter(block)
-        except ValueError: pass
+        try:
+            es.addons.unregisterSayFilter(block)
+        except ValueError:
+            pass
 
     def remove_user(self, uid, name):
         if name in self.filters.keys():
@@ -249,37 +279,41 @@ class _chat_filters_system:
                 return True
         return False
 
-    def _remove_all(self):
+    def remove_all_filters(self):
         for k, v in self.filters.items():
-            try: es.addons.unregisterSayFilter(v.block)
-            except ValueError: pass
+            try:
+                es.addons.unregisterSayFilter(v.block)
+            except ValueError:
+                pass
         self.filters.clear()
-chat_filters = _chat_filters_system()
 
-class _messages_system:
-    """ Class with all message types functions """
+
+chat_filters = _ChatFiltersSystem()
+
+
+class _MessageSystem:
+    ''' Class with all message types functions '''
 
     def __init__(self):
         self.spam_queue = []
         self.colors = {'blue': '71ACDF',
                        'green': '5cb85c',
-                       'cyan': '5bc0de',
                        'orange': 'f0ad4e',
                        'red': 'EF625D',
                        'black': '292b2c',
                        'white': 'FFFFFF',
-                       'pink':'ffc0cb',
+                       'pink': 'ffc0cb',
                        'gray': 'a9a9a9',
                        'purple': '931CE2',
                        'yellow': 'ffff00',
                        'cyan': '00ffff',
-                       't':'ff3d3d',
+                       't': 'ff3d3d',
                        'ct': '9bcdff',
-                       'spec':'cdcdcd',
-                       'default':'ffb300'}
+                       'spec': 'cdcdcd',
+                       'default': 'ffb300'}
 
     def _compile(self, text, remove=False, special=True):
-        """ Compiles the given text making 3 essential changes:
+        ''' Compiles the given text making 3 essential changes:
             - Replaces color tags (e.g #blue) with color codes for colorful chat messages
             - Removes special characters like Newline (e.g \\n) from the text
             - Strips white spaces from the text
@@ -288,7 +322,8 @@ class _messages_system:
             instead of replacing them, this is so if the text is sent to console
             or hudhints the text appears clean without the tags.
 
-            * If the special argument is False then special characters wont be removed"""
+            * If the special argument is False then special characters won't be removed
+        '''
         if remove:
             for color in self.colors.keys():
                 text = text.replace('#' + color, '')
@@ -296,27 +331,26 @@ class _messages_system:
             for color, code in self.colors.items():
                 text = text.replace('#' + color, '\x07' + code)
         if special:
-            for i in ('\\n','\\r','\\t'):
+            for i in ('\\n', '\\r', '\\t'):
                 text = text.replace(i, '')
         return text.strip()
 
-    def _sort_users(self, users):
+    @staticmethod
+    def _sort_users(users):
         if isinstance(users, int) or users in FILTERS:
             return users
         elif users == '#admins':
             return player_list('#admins')
         new = []
-        for i in users:
-            if i == '#admins':
-                for i in player_list('#admins'):
-                    if int(i) not in new:
-                        new.append(int(i))
-            elif i in FILTERS:
-                for u in playerlib.getUseridList(i):
-                    if int(u) not in new:
-                        new.append(int(u))
-            elif es.exists('userid', int(i)) and int(i) not in new:
-                new.append(int(i))
+        for x in users:
+            if str(x).startswith('#'):
+                for ply in player_list(x):
+                    if ply not in new:
+                        new.append(ply)
+                continue
+            x = int(x)
+            if es.exists('userid', x) and x not in new:
+                new.append(x)
         return new
 
     def _in_queue(self, text):
@@ -324,26 +358,26 @@ class _messages_system:
         if text_hash in self.spam_queue:
             return True
         self.spam_queue.append(text_hash)
-        delay_task(10, 'message_spam_queue_%s' % text_hash, self.spam_queue.remove, (text_hash))
+        delay_task(10, 'message_spam_queue_%s' % text_hash, self.spam_queue.remove, text_hash)
         return False
 
-    def tell(self, users, text, prefix=True, tag=False, log=False, queue=True):
-        """ Chat message that can be sent to any player or group of players
+    def tell(self, users, text, prefix=True, tag=False, log=False):
+        ''' Chat message that can be sent to any player or group of players
             The text can be color coded
 
-            e.g: #red{prefix} | #green{tag} | #whiteHello World """
+            e.g: #red{prefix} | #green{tag} | #whiteHello World '''
 
         prefix = '#default%s #gray| ' % settings('chat_prefix') if prefix else '#default'
-        tag    = '#green%s #gray| ' % tag if tag else ''
-        text2   = '%s%s#white%s' % (prefix, tag, text)
+        tag = '#green%s #gray| ' % tag if tag else ''
+        text2 = '%s%s#white%s' % (prefix, tag, text)
         if self._in_queue(text):
             return
         if log and ('#all' in users or '#human' in users):
             self.console(text, tag)
-        usermsg.saytext2(self._sort_users(users), 0, """%s""" % self._compile(text2))
+        usermsg.saytext2(self._sort_users(users), 0, '''%s''' % self._compile(text2))
 
     def hud(self, users, *text):
-        """ A hudhint type message which appears in the bottom center of the player screen """
+        ''' A hudhint type message which appears in the bottom center of the player screen '''
         usermsg.hudhint(self._sort_users(users),
                         self._compile('| SAM |\n' + '\n'.join(map(str, text)), True))
 
@@ -356,52 +390,61 @@ class _messages_system:
                                       remove=True,
                                       special=False))
 
-    def VGUIPanel(self, users, panel_name, visible, data={}):
+    def vgui_panel(self, users, panel_name, visible, data=None):
+        if data is None:
+            data = {}
         usermsg.showVGUIPanel(self._sort_users(users), panel_name, visible, data)
 
-    def motd(self, users, title, path, t=2):
-        """ Message Of The Day type message, to send URL pages to
-            users using the in-game MOTD window browser """
-        usermsg.motd(self._sort_users(users), t, 'SAM | %s' % title, path)
+    def motd(self, users, window_title, url_or_filepath, message_type=2):
+        ''' Message Of The Day type message, to send URL pages to
+            users using the in-game MOTD window browser '''
+        usermsg.motd(self._sort_users(users),
+                     message_type,
+                     'SAM | %s' % window_title,
+                     url_or_filepath)
 
-    def info(self, users, title, *lines):
+    def info(self, users, window_title, *lines):
         with open(path.info_window_file, 'w') as f:
             f.write('\n'.join(lines))
-        self.motd(self._sort_users(users), title, path.info_window_file.replace('\\', '/'), 3)
+        self.motd(self._sort_users(users),
+                  window_title,
+                  path.info_window_file.replace('\\', '/'), 3)
 
     def console(self, text, tag=None):
-        """ Prints a message to the server console with SAM's prefix, a "tag" can be used
+        ''' Prints a message to the server console with SAM's prefix, a "tag" can be used
             to identify the system or addon from which the message is being sent
 
-            e.g SAM | PLAYERS MANAGER | X was kicked from the server. """
+            e.g. SAM | PLAYERS MANAGER | X was kicked from the server. '''
         print(self._compile('[%s][SAM] %s%s' %
-                            (get_time('%H:%M:%S'),tag.upper() + ' | ' if tag else '', text), True))
-msg = _messages_system()
+                            (get_time('%H:%M:%S'),
+                             tag.upper() + ' | ' if tag else '',
+                             text),
+                            True))
 
-class _admins_system:
+
+msg = _MessageSystem()
+
+
+class _AdminsSystem:
 
     def __init__(self):
         self.admins = databases.load('admins_data')
         self.groups = databases.load('admins_groups')
+        self.addons_flags = []
         self.flags = ['addons_monitor',
                       'admins_manager',
                       'players_manager',
-                      'teams_manager',
                       'kick_players',
-                      'mute_players',
-                      'maps_manager',
-                      'bots_manager',
                       'rcon_command',
-                      'admins_chat',
-                      'settings',
-                      'ban_manager']
+                      'settings_manager']
 
         # Update admin groups with new flags if any new flag exists
         for k, v in self.groups.items():
             keys = v.keys()
-            for i in self.flags:
-                if i not in keys:
-                    v[i] = False
+            for group in (self.flags, self.addons_flags):
+                for i in group:
+                    if i not in keys:
+                        v[i] = False
 
     def __repr__(self):
         return str(self.admins)
@@ -436,6 +479,11 @@ class _admins_system:
         return user in self.admins.keys()
 
     def can(self, uid, flag, notify=True):
+        ''' Check whether an Admin is allowed to
+
+            uid: userid
+            flag:
+        '''
         if plugin.developer_mode == 3:
             return True
         sid = getsid(uid)
@@ -449,34 +497,39 @@ class _admins_system:
         group = admin['group']
         group = self.groups[group] if group and group in self.groups.keys() else None
         if flag in self.flags:
-            i = admin[flag] or (group[flag] if group else False)
-            if not i:
-                msg.hud(uid, 'You don\'t have permission to use %s' % title(flag))
-            return i
+            x = admin[flag] or (group[flag] if group else False)
+            if not x and notify:
+                msg.hud(uid, 'You don\'t have flag to use %s' % title(flag))
+            return x
         elif flag == 'ban_level':
             return max(admin['ban_level'], group['ban_level'] if group else 0)
 
-    def immunity_check(self, uid, admin2):
+    def immunity_check(self, uid, adm2):
         if plugin.developer_mode == 3:
             return True
         sid = getsid(uid)
-        if not self.is_admin(admin2) or sid == admin2:
+        if not self.is_admin(adm2) or sid == adm2:
             return True
-        admin1 = self.admins[sid]
-        admin2 = self.admins[admin2]
-        if admin2['super_admin']:
-            msg.hud(uid, 'Action denied! %s is a Super Admin.' % admin2['name'])
+        adm1 = self.admins[sid]
+        adm2 = self.admins[adm2]
+        if adm2['super_admin']:
+            msg.hud(uid, 'Action denied! %s is a Super Admin.' % adm2['name'])
             return False
-        elif admin1['super_admin']:
+        elif adm1['super_admin']:
             return True
-        admin1_g = self.groups[admin1['group']]['immunity_level'] if admin1['group'] else 0
-        admin2_g = self.groups[admin2['group']]['immunity_level'] if admin2['group'] else 0
-        check = max(admin1['immunity_level'], admin1_g) > max(admin2['immunity_level'], admin2_g)
+
+        def group_immunity(adm):
+            return self.groups[adm['group']]['immunity_level'] if adm['group'] else 0
+
+        adm1_g = group_immunity(adm1)
+        adm2_g = group_immunity(adm2)
+        check = max(adm1['immunity_level'], adm1_g) > max(adm2['immunity_level'], adm2_g)
         if not check:
-            msg.hud(uid, 'Action denied! %s has higher immunity level than you' % admin2['name'])
+            msg.hud(uid,
+                    'Action denied! %s has higher immunity level than you' % adm2['name'])
         return check
 
-    def _update_admin(self, admin):
+    def update_admin(self, admin):
         uid = getuid(admin)
         if uid is None:
             return
@@ -487,12 +540,117 @@ class _admins_system:
             if flag not in data.keys():
                 data[flag] = False
         for i in data.keys():
-            if i not in self.flags and i not in ('name', 'since', 'immunity_level', 'super_admin',
-                                                 'ban_level', 'group'):
+            if i not in self.flags and i not in ('name', 'since', 'immunity_level',
+                                                 'super_admin', 'ban_level', 'group'):
                 del data[i]
-admins = _admins_system()
 
-class _commands_system:
+
+admins = _AdminsSystem()
+
+
+class _AddonsMonitor:
+    class AddonClass(str):
+        def __init__(self, addon):
+            self.basename = addon
+            self.name = 'unkown_addon'
+            self.state = False
+            self.locked = False
+            self.version = '0.0'
+            self.description = []
+
+        def __repr__(self):
+            return str(type(self))
+
+        def __str__(self):
+            return self.__repr__()
+
+        def __call__(self, key):
+            return self.__dict__[key]
+
+    def __init__(self):
+
+        # Init Addons dictionary instance
+        self.addons = {}
+
+        # Installed Addons verification
+        self._verify_installed_addons()
+
+        # Get Addons Monitor database
+        database = databases.load('addons_monitor')
+
+        # Get all Addons state and lock condition
+        for addon in database.keys():
+            if addon not in self.addons.keys():
+                continue
+            for key in ('state', 'locked'):
+                self.addons[addon].__dict__[key] = database[addon][key]
+
+    def __repr__(self):
+        return str(self.addons)
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __call__(self, addon=None):
+        return self.addons[addon] if addon in self.addons.keys() else None
+
+    def _verify_installed_addons(self):
+        # Loop over all installed Addons
+        installed = self.addons_dir_list()
+
+        for addon in installed:
+            # Check if metadata file is valid
+            metadata = path.addons + addon + '/metadata.json'
+            if not os.path.isfile(metadata):
+                debug(1, '[Addons Monitor] Failed to install/update %s \
+                          addon, missing metadata.json file' % title(addon))
+                continue
+            metadata = databases.load(metadata, bypass=True)
+            if not metadata:
+                debug(1, '[Addons Monitor] Failed to install/update %s,\
+                          invalid metadata.json file' % title(addon))
+                continue
+
+            # Confirm installation by saving copying metadata
+            if addon not in self.addons.keys():
+                self.addons[addon] = self.AddonClass(addon)
+                self.addons[addon].__dict__.update(metadata.copy())
+                continue
+
+            # Else update the Addon's infos
+            for key in metadata.keys():
+                if key in ('state', 'locked') \
+                        or metadata[key] == self.addons[addon].__dict__[key]:
+                    continue
+                self.addons[addon].__dict__[key] = metadata[key]
+
+    def save_database(self):
+        database = {}
+        for addon in self.addons.keys():
+            database[addon] = self.addons[addon].__dict__.copy()
+        databases.save('addons_monitor', database)
+
+    @staticmethod
+    def addons_dir_list():
+        ''' List of Addons in the addons folder '''
+        return (i for i in os.listdir(path.addons) if os.path.isdir(path.addons + i))
+
+    def is_running(self, addon):
+        if addon not in self.addons.keys():
+            return False
+        return self.addons[addon].state
+
+    def import_addon(self, addon):
+        if not self.is_running(addon):
+            debug(1, 'Could not import %s, addon is not running or is missing' % addon)
+            return None
+        return import_module('addons/' + addon)
+
+
+addons_monitor = _AddonsMonitor()
+
+
+class _CommandsSystem:
 
     def chat(self, command, block):
         self.delete(command)
@@ -507,7 +665,8 @@ class _commands_system:
         self.delete(command)
         cmdlib.registerServerCommand('sam_' + command, block, 'SAM console command')
 
-    def delete(self, command):
+    @staticmethod
+    def delete(command):
         if es.exists('saycommand', '!' + command):
             cmdlib.unregisterSayCommand('!' + command)
             cmdlib.unregisterSayCommand('!sam_' + command)
@@ -516,10 +675,15 @@ class _commands_system:
             cmdlib.unregisterClientCommand(command)
         if es.exists('variable', command) or es.exists('command', command):
             cmdlib.unregisterServerCommand(command)
-cmds = _commands_system()
 
-class _players_info_system:
-    """ Internal Player information system """
+
+cmds = _CommandsSystem()
+
+
+class _PlayersProfileSystem:
+    ''' Systems responsiple for gathering various types of information about
+        the player to be used in multiple other systems
+    '''
 
     class Player(object):
         def __init__(self, data):
@@ -532,10 +696,10 @@ class _players_info_system:
 
         # Update active players
         for uid in userid_list('#human'):
-            self._update(uid)
+            self.update(uid)
 
     def __call__(self, user):
-        """ Return the Player info as class object """
+        ''' Return the Player info as class object '''
         target = None
         if isinstance(user, int):
             target = getsid(user)
@@ -546,10 +710,11 @@ class _players_info_system:
     def list(self):
         return [self.Player(self.data[k]) for k in self.data.keys()]
 
-    def _update(self, uid):
-        """ Updates the player info into the database """
+    def update(self, uid):
+        ''' Updates the player info into the database '''
         ply = get_player(uid)
-        if ply.steamid == 'BOT': return
+        if ply.steamid == 'BOT':
+            return
         i = {'name': ply.name.encode('utf-8'),
              'steamid': ply.steamid,
              'first_seen': get_time('%d/%m/%Y'),
@@ -567,133 +732,189 @@ class _players_info_system:
                     d[k] = v
             d['name'] = ply.name.encode('utf-8')
         # Or add player to database if not in yet
-        else: self.data[ply.steamid] = i.copy()
+        else:
+            self.data[ply.steamid] = i.copy()
         databases.save('players_data', self.data)
 
-class PageSetup(object):
 
-    def __init__(self, pageid, callback=None, previous_page=None):
-        self.pageid = pageid
+class Menu(object):
+    ''' Class system based on EventScripts Popuplib library to create paged menus
+        using SourceEngine's Radio Popups as the user interface.  '''
+
+    def __init__(self, menu_id, callback=None, submenu=None):
+        self.menu_id = menu_id
         self.callback = callback
-        self.previous_page = False
-        self.previous_subpage = 1
-        if isinstance(previous_page, str):
-            self.previous_page = previous_page
-        elif previous_page:
-            self.previous_page = previous_page.pageid
-            self.previous_subpage = previous_page.subpage
+        self.submenu = False
+        self.submenu_page = 1
+        if isinstance(submenu, str):
+            self.submenu = submenu
+        elif submenu:
+            self.submenu = submenu.menu_id
+            self.submenu_page = submenu.page
         self.title_text = False
         self.header_text = True
         self.footer_text = False
         self.description_text = False
         self.close_option = True
-        self.subpage_counter = True
-        self.subpages = {1: []}
+        self.pages_counter = True
+        self.pages = {1: []}
         self.maxlines = 7
-        self.all_valid = False
+        self.validate_all_lines = False
         self.timeout = 0
         self.blocked_options = []
-        sep = int(settings('pages_separator_line_length'))
-        self.separator_line = '-' * sep if sep <= 40 else 40
+        length = int(settings('menus_separator_line_length'))
+        self.separator_line = '-' * length if length <= 40 else 40
 
     def title(self, text):
+        ''' Adds/Changes the title of the menu '''
         self.title_text = ' :: ' + text
 
     def description(self, *lines):
+        ''' Adds/Changes the description of the menu
+            Note: Multiple lines can be given as a list() '''
         self.description_text = '\n'.join(lines)
 
     def footer(self, *lines):
+        ''' Adds/Changes the footer of the menu
+            Note: Multiple lines can be given as a list() '''
         self.footer_text = self.separator_line + '\n' + '\n'.join(lines)
 
-    def newline(self, *text):
-        self.subpages[self._current_subpage()].extend([i for i in text])
+    def add_line(self, *lines):
+        ''' Adds a new line to the menu
+            Note: Multiple lines can be given as a list() '''
+        self.pages[self._current_page()].extend([str(line) for line in lines])
 
-    def separator(self):
-        self.newline(self.separator_line)
+    def add_option(self, obj, text, blocked=False):
+        ''' Adds a new option to the menu  '''
 
-    def option(self, obj, text, blocked=False):
-        subpage = self._current_subpage()
-        self.subpages[subpage].append({'object': obj,
-                                       'text': text,
-                                       'blocked': blocked,
-                                       'choice': len(self.subpages[subpage]) + 1})
+        # Get the current page
+        page = self._current_page()
+        # Add the option to the list of lines of the current page
+        self.pages[page].append({'object': obj,
+                                 'text': text,
+                                 'blocked': blocked,
+                                 'choice': len(self.pages[page]) + 1,
+                                 'page': page})
 
-    def options(self, obj):
+    def add_multiple_options(self, obj):
+        ''' Adds multiple options, can either from a list or a dict'''
+
         if isinstance(obj, dict):
             for k, v in obj.items():
-                self.option(v, k)
+                self.add_option(v, k)
             return
         for i in obj:
-            self.option(i, i)
+            self.add_option(i, i)
 
-    def next_subpage(self):
-        self.subpages[max(self.subpages.keys()) + 1] = []
+    def separator(self):
+        ''' Adds a seperator line to the menu '''
+        self.add_line(self.separator_line)
 
-    def send(self, users, subpage=1):
-        debug(2, '[Initializing Page Setup Process]')
-        debug(2, '- Page ID: %s' % self.pageid)
-        display = []
-        debug(2, '- Page Features:')
+    def next_page(self):
+        ''' Initializes the next page in the menu.
+            Say one requires a page to have just 3 options, but yet has more options
+            to be added on a different page.
+        '''
+        self.pages[max(self.pages.keys()) + 1] = []
+
+    def send(self, users, page=1):
+        ''' Should be called once the menu is fully setup and ready to be sent to the user
+            Builds the given page with the menu title, description, lines, options, etc.,
+            and sends it to the user/users.
+        '''
+        debug(2, '[Initializing Menu Setup Process]')
+        debug(2, '- Menu ID: %s' % self.menu_id)
+        # Abort if users do not exist at all
+        if not users:
+            debug(2, '[Aborting Menu Setup Process: No Valid Users Found]')
+            return
+        debug(2, '- Menu Features:')
         debug(2, '   * Header: %s' % str(bool(self.header_text)))
+        # Each page text are built line by line, therefore create a display list to
+        # store all lines and options by order they were added
+        display = []
+        # First, lets add the header of the menu, by default is SAM's title and current
+        # version, also a local clock if enabled
         if bool(self.header_text):
-            display.append('SAM v%s %s\n \n' %
-            (plugin.version, ' ' * 30 + get_time('%H:%M') if settings('enable_pages_clock') else ''))
+            display.append(
+                'SAM v%s %s\n \n' %
+                (plugin.version,
+                 ' ' * 30 + get_time('%H:%M') if settings('enable_menus_clock') else ''))
         debug(2, '   * Title: %s' % str(bool(self.title_text)))
+        # Second, we add the title of the menu
         if bool(self.title_text):
-            total_subpages = len(self.subpages.keys())
-            if total_subpages > 1:
-                display.append('%s   (%s/%s)' % (self.title_text, subpage, total_subpages)
-                                if self.subpage_counter else self.title_text)
-            else: display.append(self.title_text)
+            total_of_pages = len(self.pages.keys())
+            if total_of_pages > 1:
+                display.append('%s   (%s/%s)' % (self.title_text, page, total_of_pages)
+                               if self.pages_counter else self.title_text)
+            else:
+                display.append(self.title_text)
         debug(2, '   * Description: %s' % str(bool(self.description_text)))
-        if self.description_text:
+        # Third, we add the description of the menu
+        if bool(self.description_text):
             display.extend((self.separator_line, self.description_text))
         display.append(self.separator_line)
         debug(2, '   * Settting up Lines & Options')
-        option = 0
+        # Forth, start adding the page lines and options
+        # Build a new list of blocked options
         self.blocked_options = []
-        if self.maxlines > 8:
-            self.maxlines = 8
-        for line in self.subpages[subpage]:
-            if self.maxlines and option == self.maxlines:
-                break
-            if not isinstance(line, dict):
-                display.append(str(line))
-                if self.all_valid:
-                    option += 1
+        # Check if the number of max lines is between the valid values
+        if self.maxlines not in range(1, 8):
+            self.maxlines = 7
+        # Iterate through the page's lines and options
+        option_number = 0
+        for line in self.pages[page]:
+            # If it's just a text line we simply add the line
+            if isinstance(line, str):
+                display.append(line)
+                # TODO: Investigate if its worth validating all lines anyway
+                if self.validate_all_lines:
+                    option_number += 1
                 continue
-            option += 1
+            # If it's an option, we add one to the option_number to keep track which
+            # options is being added
+            option_number += 1
+            # It its blocked add it the blocked_options list
             if line['blocked']:
-                self.blocked_options.append(option)
-            display.append('%s%s. %s' % ('' if line['blocked'] else '->', option, line['text']))
+                self.blocked_options.append(option_number)
+            # Add the option text, if blocked then appears as a normal text line
+            display.append('%s%s. %s' % ('' if line['blocked'] else '->',
+                                         option_number,
+                                         line['text']))
         debug(2, '   * Blocked Options: %s' % len(self.blocked_options))
         debug(2, '   * Footer: %s' % str(bool(self.footer_text)))
+        # Add the footer of the menu
         if self.footer_text:
             display.append(self.footer_text)
         if self.close_option:
             display.append(self.separator_line)
-        if subpage > 1:
-            debug(2, '- Previous Page: %s' % self.previous_page)
-            display.append('->8. Previous Subpage')
-        if subpage + 1 in self.subpages.keys():
+        # Is not the first to add the previous page option
+        if page > 1:
+            debug(2, '- Previous Page: %s' % self.submenu)
+            display.append('->8. Previous Page')
+        # Check if there's a page next to the given one and add the next page option if so
+        if page + 1 in self.pages.keys():
             debug(2, '- Next Page Option Set')
-            display.append('->9. Next Subpage')
+            display.append('->9. Next Page')
         debug(2, '- Close Option: %s' % str(self.close_option))
+        # Check if the close option should be added
         if self.close_option:
-            text = '0. %s' % ('Previous Page' if self.previous_page else 'Close Page')
+            # Check if the there's a submenu to the active menu, if so the user goes back
+            # to the submenu, otherwise we just close the menu on the user
+            text = '0. %s' % ('Previous Menu' if self.submenu else 'Close Menu')
             display.append(text)
+        # If nothing was added to the page we simply abort the process
         if not display:
-            debug(2, '[Aborting Page Setup Process: Empty Page]')
+            debug(2, '[Aborting Menu Setup Process: Empty Page]')
             return
         display = '\n'.join(display)
-        debug(2, '>> Page display build process complete!')
-        cache.pages[self.pageid] = self
-        debug(2, '>> Page caching complete!')
-        users = (users, ) if isinstance(users, int) else userid_list(users)
-        if not users:
-            debug(2, '[Aborting Page Setup Process: No Valid Users Found]')
-            return
-        debug(2, '>> Sending Page To Users:')
+        debug(2, '>> Menu display build process complete!')
+        # At this point the page is complete, and we can cache it
+        cache.menus[self.menu_id] = self
+        debug(2, '>> Menu caching complete!')
+        users = (users,) if isinstance(users, int) else userid_list(users)
+        debug(2, '>> Sending Menu To Users:')
+        # Send the page to each user
         for user in users:
             uid = int(user)
             debug(2, '   -------------------------')
@@ -701,54 +922,94 @@ class PageSetup(object):
             debug(2, '   -------------------------')
             debug(2, '   %s      - %s' % (user, getsid(user)))
             debug(2, '   -------------------------')
-            _cancel_page_refresh(uid)
-            cache.users_pages[uid] = {'active': self.pageid, 'subpage': subpage}
+            # Make sure the user doesn't have an active page being refreshed
+            _cancel_menu_refresh(uid)
+            # Cache the menu as the user's new active menu
+            cache.users_active_menu[uid] = {'menu_id': self.menu_id, 'page': page}
+            # Display the menu to the user in-game
             es.showMenu(self.timeout, uid, display.encode('utf-8'))
+            # If there's no timeout to the page then create a loop to refresh the page to
+            # the user, so it maintains active until the user chooses something, or closes
+            # the page
             if self.timeout == 0:
                 delay_task(1, 'refresh_%s_page' % uid, self._refresh_page, uid)
         debug(2, '[Page Setup Process Complete]')
 
-    def send_option(self, uid, option):
-        option = self.get_option(option)
-        self.send(uid, option['subpage'])
-        handle_choice(option['choice'], uid)
+    def send_option(self, uid, option, page=None):
+        option = self.get_option_data(option, page)
+        self.send(uid, option['page'])
+        handle_choice(option['option_number'], uid)
 
-    def get_option(self, option, subpage=None):
-        if not subpage:
-            for page in self.subpages.keys():
-                for option in self.page_options(page):
-                    if option['object'] == option:
-                        subpage = page
-        options = self.page_options(subpage)
-        if isinstance(option, int):
-            return options[option - 1]
-        for option in options:
-            if option['object'] == option:
-                option['subpage'] = subpage
-                return option
+    def get_option_data(self, obj, page=None):
+        ''' Returns a dictionary containing all the data from the option.
+            The object can be the number that the user must select to choose the option.
+            It can also be the actual object from the option,
+            which is given in the menu's callback block once the user makes a selection.
 
-    def page_options(self, subpage=None):
-        if not subpage:
-            subpage = self._current_subpage()
-        return [i for i in self.subpages[subpage] if isinstance(i, dict)]
+            The dictionary contains:
+            'object': The object that is given in the menu's callback block.
+            'text': The option text that appears in the page.
+            'blocked': A boolean value indicating whether the option is blocked.
+            'option_number': The number that the user must select to choose the option.
+            'page': The page of the menu the option is on
+        '''
 
-    def _refresh_page(self, user):
-        if user not in cache.users_pages.keys():
+        def look_in_page(_obj, _page):
+            options = self.get_page_options(_page)
+            # If obj is integer, then must be the option number
+            if isinstance(_obj, int):
+                return options[_obj - 1]
+            # Alternativaly loop through all options and compare if the object is the same
+            for option in options:
+                if option['object'] == obj:
+                    return option
+            else:
+                return None
+
+        # If a page was given
+        if page:
+            return look_in_page(obj, page)
+        else:
+            # If a page wasn't given then look for the option in all the menu pages
+            for page in self.pages.keys():
+                option = look_in_page(obj, page)
+                if option == obj:
+                    return option
+            else:
+                return None
+
+    def get_page_options(self, page=None):
+        ''' Returns the list of all the page's options '''
+
+        # If a page was not given, then get the current page
+        if not page:
+            page = self._current_page()
+        return [i for i in self.pages[page] if isinstance(i, dict)]
+
+    @staticmethod
+    def _refresh_page(user):
+        ''' Simply gets the user's current active page and re-sends it '''
+
+        if user not in cache.users_active_menu.keys():
             return
-        page = cache.users_pages[int(user)]
-        if page['active'] in cache.pages.keys():
-            cache.pages[page['active']].send(user, page['subpage'])
+        menu = cache.users_active_menu[int(user)]
+        if menu['menu_id'] in cache.menus.keys():
+            cache.menus[menu['menu_id']].send(user, menu['page'])
 
-    def _current_subpage(self):
-        subpage = max(self.subpages.keys())
-        if self.maxlines and len(self.page_options(subpage)) == self.maxlines:
-            subpage += 1
-            self.subpages[subpage] = []
-        return subpage
+    def _current_page(self):
+        ''' Returns the current page that is being added lines and options '''
+
+        page = max(self.pages.keys())
+        # Check if the number of the page options higher or equal to the max lines
+        # if so then initiate the next page
+        if self.maxlines and len(self.get_page_options(page)) >= self.maxlines:
+            page += 1
+            self.pages[page] = []
+        return page
+
 
 # Core Functions
 def load():
-
     # Initialize core commands
     cmds.chat('sam', sam_CMD)
     cmds.chat('rcon', rcon_CMD)
@@ -766,28 +1027,25 @@ def load():
     es.makepublic('sam_version')
     msg.tell('#all', 'Loaded', tag='#blue' + plugin.version)
 
-def unload():
 
+def unload():
     # Close active menus from users
-    for user in cache.users_pages.keys():
+    for user in cache.users_active_menu.keys():
         handle_choice(10, user, True)
         msg.hud(user, 'Your page was closed since SAM is unloading.')
 
     # Terminate all chat filters
-    chat_filters._remove_all()
+    chat_filters.remove_all_filters()
 
     # Clear cache
-    cache.pages.clear()
-    cache.users_pages.clear()
+    cache.menus.clear()
+    cache.users_active_menu.clear()
 
     # Delete core module commands
     cmds.delete('sam')
     cmds.delete('menu')
     cmds.delete('rcon')
     cmds.delete('admins')
-
-    # Cancel delays
-    cancel_delay('settings_watch')
 
     # Save databases
     databases.save('admins_data', admins.admins)
@@ -802,47 +1060,51 @@ def unload():
 
     msg.tell('#all', 'Unloaded', tag='#blue' + plugin.version)
 
+
 # Home Page
 def home_page(uid):
-    page = PageSetup('home_page', home_page_HANDLE)
-    page.title('Home Page')
+    menu = Menu('home_page', home_page_HANDLE)
+    menu.title('Home Page')
     for module in MODULES:
-        page.option(module, title(module))
+        menu.add_option(module, title(module))
     if HOME_PAGE_ADDONS:
-        page.separator()
-        page.newline(' :: Addons')
-        page.separator()
-        addons = import_module('addons_monitor').addons
-        for addon in HOME_PAGE_ADDONS:
-            if addon in addons.keys() and addons[addon]['state']:
-                page.option(addon, addons[addon]['name'])
-            else:
-                HOME_PAGE_ADDONS.remove(addon)
+        menu.separator()
+        menu.add_line('  :: Addons')
+        menu.separator()
+        for basename in HOME_PAGE_ADDONS:
+            addon = addons_monitor(basename)
+            if addon is None or not addon.state:
+                HOME_PAGE_ADDONS.remove(basename)
                 home_page(uid)
-                return
-    page.send(uid)
+                continue
+            menu.add_option(basename, addon.name)
+    menu.send(uid)
 
-def home_page_HANDLE(uid, choice, prev_page):
+
+def home_page_HANDLE(uid, choice, submenu):
     if choice in MODULES:
-        import_module(choice).module_page(uid)
+        import_module(choice).module_menu(uid)
         return
     elif choice in HOME_PAGE_ADDONS:
-        import_addon(choice).addon_page(uid)
+        addons_monitor.import_addon(choice).addon_menu(uid)
+
 
 # Command Functions
 def sam_CMD(uid, args):
     if not bool(admins.admins):
-        import_module('admins_manager')._firstAdminSetup(uid)
+        import_module('admins_manager').first_admins_setup(uid)
         return
     if admins.is_admin(uid):
         home_page(uid)
-    else: msg.hud(uid, 'You don\'t have permission to use this')
+    else:
+        msg.hud(uid, 'You don\'t have permission to use this')
+
 
 def rcon_CMD(uid, args):
     if not admins.can(uid, 'rcon_command') or not settings('enable_!rcon_command'):
         return
     if not args:
-        msg.tell(uid, '#blueSyntax example:\n#orange!rcon <command/variable> {arguments/value}')
+        msg.tell(uid, '#blueSyntax Example:\n#orange!rcon <command/variable> {arguments/value}')
         return
     cmd = args.pop(0)
     args = ' '.join(args) if args else None
@@ -863,7 +1125,9 @@ def rcon_CMD(uid, args):
             es.server.insertcmd(cmd)
         msg.tell(uid, 'RCON: #blueExecuted %s %s' % (str(cmd), str(args)))
         return
-    else: msg.tell(uid, '#green\'%s\' #orangeis not a command or server variable.' % (cmd))
+    else:
+        msg.tell(uid, '#green\'%s\' #orangeis not a command or server variable.' % cmd)
+
 
 def admins_CMD(uid, args):
     if not settings('enable_!admins_command'):
@@ -872,19 +1136,20 @@ def admins_CMD(uid, args):
     if not lis1:
         msg.tell(uid, '#redThere are no #cyanAdmins #redonline')
         return
-    page = PageSetup('admins_list')
-    page.header_text = False
-    page.title('Admins Online (%s of %s)' % (len(lis1), len(admins.list())))
+    menu = Menu('admins_list')
+    menu.header_text = False
+    menu.title('Admins Online (%s of %s)' % (len(lis1), len(admins.list())))
     lis2 = []
     for i in lis1:
         text = i['name']
         if i['super_admin']:
-            page.option(i, text + ' [Super Admin]')
+            menu.add_option(i, text + ' [Super Admin]')
         else:
             lis2.append('%s [%s]' % (title(i['group']), text) if i['group'] else text)
     for i in sorted(lis2):
-        page.option(i, i)
-    page.send(uid)
+        menu.add_option(i, i)
+    menu.send(uid)
+
 
 # Core Functions
 def getuid(user):
@@ -896,16 +1161,21 @@ def getuid(user):
         return user
     return None
 
+
 def getsid(user):
     return es.getplayersteamid(getuid(user))
 
+
 def get_player(user):
-    try: return playerlib.getPlayer(getuid(user))
-    except: return None
+    try:
+        return playerlib.getPlayer(getuid(user))
+    except:
+        return None
+
 
 def player_list(*filters):
     if not filters:
-        return playerlib.getPlayerList('#human')
+        return playerlib.getPlayerList('#all')
     elif len(filters) == 1:
         target = filters[0]
         if target == '#admins':
@@ -917,6 +1187,7 @@ def player_list(*filters):
             if f in FILTERS:
                 targets.extend(playerlib.getPlayerList(f))
         return targets
+
 
 def userid_list(*filters):
     if not filters:
@@ -933,62 +1204,71 @@ def userid_list(*filters):
                 targets.extend(playerlib.getUseridList(f))
         return targets
 
-def change_team(uid, newteam):
+
+def change_team(uid, team_id):
+    
     es.changeteam(uid, 1)
-    if newteam == 2:
+    if team_id == 2:
         es.changeteam(uid, 2)
         es.setplayerprop(uid, 'CCSPlayer.m_iClass', random.randint(1, 4))
-        msg.VGUIPanel(uid, 'class_ter', False, {})
-    elif newteam == 3:
+        msg.vgui_panel(uid, 'class_ter', False, {})
+    elif team_id == 3:
         es.changeteam(uid, 3)
         es.setplayerprop(uid, 'CCSPlayer.m_iClass', random.randint(5, 8))
-        msg.VGUIPanel(uid, 'class_ct', False, {})
+        msg.vgui_panel(uid, 'class_ct', False, {})
+
 
 def emit_sound(target, sound, volume=1, attenuation=0.5):
     es.emitsound('player', target, sound, volume, attenuation)
 
+
 def play_sound(users, sound, volume=1.0):
+    # TODO: Need to finish the funtion
     pass
 
+
 def stop_sound(uid):
+    # TODO: Need to finish the funtion
     pass
+
 
 def import_module(module):
     return es.import_addon('sam/' + module)
 
-def import_addon(addon):
-    addons = import_module('addons_monitor').addons
-    if addon in addons.keys() and addons[addon]['state']:
-        return import_module('addons/' + addon)
-    msg.console('SAM: Failed to import "%s" addon, unloaded' % addon)
-    return None
 
-def delay_task(time, name, function, args=()):
-    gamethread.delayedname(time, 'sam_' + name, function, args)
+def delay_task(seconds, name, function, args=()):
+    gamethread.delayedname(seconds, 'sam_' + name, function, args)
+
 
 def cancel_delay(name):
     gamethread.cancelDelayed('sam_' + name)
 
+
 def get_time(frmt, from_stamp=None):
-    """ Examples:
+    ''' Examples:
         %d/%m/%Y, %H:%M:%S = 06/12/2018, 09:55:22
         %d %B, %Y          = 12 June, 2018
-    """
+    '''
     return datetime.fromtimestamp(from_stamp if from_stamp else timestamp()).strftime(frmt)
+
 
 def random(obj):
     return rdm.choice(obj)
 
+
 def timestamp():
     return time.time()
+
 
 def percentof(part, whole):
     return 100 * part / whole if part else 0
 
+
 def title(text):
     return text.title().replace('_', ' ') if text else 'None'
 
-def read_file(file_path, default=None):
+
+def read_file(file_path, default=None, default_file=None):
     if not os.path.isfile(file_path) and default_file:
         write_file(default)
     lines = []
@@ -999,10 +1279,12 @@ def read_file(file_path, default=None):
                 lines.append(line)
     return lines
 
+
 def write_file(file_path, lines):
     if not os.path.isfile(file_path):
         with open(file_path, 'w') as f:
             f.write('\n'.join(lines))
+
 
 # Page Functions
 def handle_choice(choice, user, force_close=False):
@@ -1010,95 +1292,167 @@ def handle_choice(choice, user, force_close=False):
         _process_user_choice(user, choice)
         return
     es.cexec(user, 'slot10')
-    if user in cache.users_pages.keys():
-        del cache.users_pages[user]
-        _cancel_page_refresh(user)
+    if user in cache.users_active_menu.keys():
+        del cache.users_active_menu[user]
+        _cancel_menu_refresh(user)
 
-def _cancel_page_refresh(tar):
+
+def send_page(uid, menu_id, page=1):
+    # Check if page exists
+    if menu_id not in cache.menus.keys():
+        return
+    # Send page to user
+    cache.menus[menu_id].send(uid, page)
+
+
+def handle_choice(choice, user, force_close=False):
+    if not force_close:
+        _process_user_choice(user, choice)
+        return
+    es.cexec(user, 'slot10')
+    if user in cache.users_active_menu.keys():
+        del cache.users_active_menu[user]
+        _cancel_menu_refresh(user)
+
+
+def _cancel_menu_refresh(tar):
     if tar in FILTERS:
         for uid in userid_list(tar):
             cancel_delay('refresh_%s_page' % uid)
-    else: cancel_delay('refresh_%s_page' % int(tar))
+    else:
+        cancel_delay('refresh_%s_page' % int(tar))
+
 
 def _process_user_choice(uid, choice):
-    _cancel_page_refresh(uid)
-    if uid not in cache.users_pages.keys():
+    ''' This function processes the user's last active menu choice.
+        - If the choice is between 1 and 7 then the active menu
+          call-back block is called.
+        - If the choice is 9, then the active menu's next page is sent to the user
+        - If the choice is 8, then the active menu's previous page is sent to the user
+        - If the choice is 10 and there is a submenu attached to the active menu
+          then the submenu is sent to the user, otherwise the user simply closed the menu
+    '''
+    # Cancel the menu refresh
+    _cancel_menu_refresh(uid)
+    # Check if the user has an active menu, if not,
+    # it means the menu has been closed to the user
+    if uid not in cache.users_active_menu.keys():
         return
-    user = cache.users_pages[uid]
-    active_page = user['active']
-    active_subpage = user['subpage']
-    del cache.users_pages[uid]
-    if active_page not in cache.pages.keys():
+    # Get the user's active menu ID and the page the user was in
+    user = cache.users_active_menu[uid]
+    active_menu = user['menu_id']
+    active_page = user['page']
+    # We can now remove the menu as the users active menu
+    del cache.users_active_menu[uid]
+    # Check is the menu still exists if not
+    # it's because the menu has been deleted for some reason
+    if active_menu not in cache.menus.keys():
         return
-    page = cache.pages[active_page]
-    if choice == 10 and page.close_option:
-        if page.previous_page and page.previous_page in cache.pages.keys():
-            cache.pages[page.previous_page].send(uid, page.previous_subpage)
+    # Get the active menu class object
+    menu = cache.menus[active_menu]
+    # Check if the choice was 0 (meaning the 10th option) and the menu has a close option
+    if choice == 10 and menu.close_option:
+        # If the menu has a submenu and the submenu still exists then send it to the user
+        if menu.submenu and menu.submenu in cache.menus.keys():
+            cache.menus[menu.submenu].send(uid, menu.submenu_page)
+        # Otherwise the user has simply closed the menu
         return
-    elif choice <= len(page.page_options(active_subpage)):
-        if choice in page.blocked_options or not page.callback:
-            if choice in page.blocked_options:
+    # Is the choice is between 1 and 7?
+    elif choice <= len(menu.get_page_options(active_page)):
+        # Check if the choice is a blocked option, or if the menu hasn't a callback block
+        if choice in menu.blocked_options or not menu.callback:
+            # If It's blocked, then notify the user
+            if choice in menu.blocked_options:
                 msg.hud(uid, 'This option is currently blocked')
-            page.send(uid, active_subpage)
+            # Re-send the menu back to the user
+            menu.send(uid, active_page)
             return
-        class PageInfo:
+
+        class SubMenu:
+            ''' Class to save last active menu and user choice as the new submenu
+                info to be carried away in the menu callback '''
+
             def __init__(self, a, b, c, d):
-                self.pageid  = a
-                self.object  = b
-                self.choice  = c
-                self.subpage = d
-            def return_page(self, uid):
-                self.object.send(uid, self.subpage)
-            def return_new(self, uid):
-                cache.pages[self.pageid].send(uid, self.subpage)
-        page.callback(uid, page.get_option(choice, active_subpage)['object'],
-                      PageInfo(page.pageid, page, choice, active_subpage))
-    elif choice == 8 and active_subpage > 1:
-        page.send(uid, active_subpage - 1)
-    elif choice == 9 and active_subpage + 1 in page.subpages.keys():
-        page.send(uid, active_subpage + 1)
+                self.menu_id = a
+                self.page = d
+                self.object = b
+                self.choice = c
+
+            def send(self, uid):
+                ''' Returns last active menu and page the same page the user was in '''
+                self.object.send(uid, self.page)
+
+        # If the option is not blocked, call the menu callback block with the choice
+        # object, and with the SubMenu class as the new previous menu
+        menu.callback(uid,
+                      menu.get_option_data(choice, active_page)['object'],
+                      SubMenu(menu.menu_id, menu, choice, active_page))
+    # If the choice is 8 and higher than 1, then send the user to the previous page
+    elif choice == 8 and active_page > 1:
+        menu.send(uid, active_page - 1)
+    # If the choice is 9 send the user to the next page
+    elif choice == 9 and active_page + 1 in menu.pages.keys():
+        menu.send(uid, active_page + 1)
+    # Otherwise just make sure the active page is sent back to the user
     else:
-        page.send(uid, active_subpage)
+        menu.send(uid, active_page)
+
+
+def _decache_player(uid, sid):
+    if uid in cache.sounds.keys():
+        del cache.sounds[uid]
+    if uid in cache.users_active_menu.keys():
+        del cache.users_active_menu[uid]
+    for chat_filter in chat_filters.filters.keys():
+        f = chat_filters.filters[chat_filter]
+        if uid in f.users:
+            chat_filters.remove_user(uid, chat_filter)
+
 
 # Game Events
-def server_shutdown(ev): es.server.cmd('es_unload sam')
+def server_shutdown(ev):
+    # Safely unload SAM on shutdown to make sure all data is saved properly
+    es.server.cmd('es_unload sam')
+
 
 def es_map_start(ev):
     # Clear Page System Cache
-    cache.pages.clear()
-    cache.users_pages.clear()
+    cache.menus.clear()
+    cache.users_active_menu.clear()
 
     # Remove all unnecessary chat filters
     for name in chat_filters.filters.keys():
         _filter = chat_filters.filters[name]
-        _filter.users.clear()
+        del _filter.users[:]
         chat_filters.remove(name, _filter.block)
 
+    # Save Addons Monitor database
+    addons_monitor.save_database()
+
+
 def es_client_command(ev):
-    # Called when player chooses a page option
+    # Called when player chooses a page add_option
     if ev['command'] == 'menuselect':
         _process_user_choice(int(ev['userid']), int(ev['commandstring']))
+
 
 def player_activate(ev):
     uid = ev['userid']
     # Update player info
-    players._update(uid)
+    players.update(uid)
+
 
 def player_disconnect(ev):
     # Decache player from the various systems
     uid = int(ev['userid'])
     sid = ev['networkid']
-    if uid in cache.sounds.keys():
-        del cache.sounds[uid]
-    if uid in cache.users_pages.keys():
-        del cache.users_pages[uid]
-    for name in chat_filters.filters.keys():
-        _filter = chat_filters.filters[name]
-        if uid in _filter.users:
-            chat_filters.remove_user(uid, name)
+
+    _decache_player(uid, sid)
+
     # Update player last seen time
     if sid in players.data.keys():
         players.data[sid]['last_seen'] = get_time('%m/%d/%Y at %H:%M:%S')
 
+
 # Class Declaration
-players = _players_info_system()
+players = _PlayersProfileSystem()
