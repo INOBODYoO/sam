@@ -6,349 +6,539 @@ psyco.full()
 sam = es.import_addon('sam')
 
 
-def load():
-    for player in sam.player_list('#human'):
-        if sam.admins.is_admin(player):
-            sam.admins.update_admin(player)
-    for group, flags in sam.admins.groups.items():
-        for flag in sam.admins.flags:
-            if flag not in flags.keys():
-                flags[flag] = False
+def module_menu(userid):
+    """ Displays the main menu of the module """
 
-
-def module_menu(uid):
-    if not sam.admins.can(uid, 'admins_manager'):
-        sam.home_page(uid)
+    # Check if the player is allowed to access the module
+    if not sam.admins.is_allowed(userid, 'admins_manager'):
+        sam.home_page(userid)
         return
+
+    # Initialize the menu
     menu = sam.Menu('admins_manager', admins_manager_HANDLE, 'home_page')
     menu.title('Admins Manager')
     menu.add_option(1, 'Add New Admin')
     menu.add_option(2, 'Remove An Admin')
-    menu.add_option(3, 'Edit Admins Profiles')
+    menu.add_option(3, 'Admins Profile Editor')
     menu.separator()
     menu.add_line(':: Admins Groups')
     menu.separator()
     menu.add_option(4, 'Create a Group')
     menu.add_option(5, 'Delete a Group')
-    menu.add_option(6, 'Edit Groups Profiles')
-    online = 0
-    super_admins = 0
-    for i in sam.userid_list():
-        if sam.admins.can(i, 'super_admin', False):
-            super_admins += 1
-        elif sam.admins.is_admin(i):
-            online += 1
+    menu.add_option(6, 'Groups Profile Editor')
+    # Get the number of online admins
+    admins = sam.admins.list()
+    super_admins = sam.admins.list('super_admins')
+    for admin in super_admins:
+        del admins[admin]
     menu.footer('Currently Online:',
-                '- Super Admins: %s' % super_admins,
-                '- Admins: %s' % online)
-    menu.send(uid)
+                '- Super Admins: %s' % len(super_admins.keys()) if super_admins else '',
+                '- Admins: %s' % len(admins) if admins else '')
+    # Send the menu
+    menu.send(userid)
 
 
-def admins_manager_HANDLE(uid, choice, submenu):
+def admins_manager_HANDLE(userid, choice, submenu):
+    """ Handles the main menu of the module """
+
+    # First check for option number 4, to create a new Admin Group
+    # We check for option 4 first, because it's not required sending a menu to the user.
+    # Instead, we can directly execute the required code and skip the rest of the code.
     if choice == 4:
-        sam.msg.tell(uid, '#blueType the name of the group in the ' +
-                     'chat or #red!cancel #blueto stop the operation.')
-        sam.chat_filters.create('new_admin_group', _new_group_FILTER, True, uid)
+        # Register a chat filter to get the name of the new group
+        f = sam.chat_filter.register('admin_group_creation', userid)
+        f.function = admin_group_creation_FILTER
+        f.cancel_option = module_menu
+        f.cancel_args = ('userid',)
+        f.instructions_page('Type in the chat name of the new group',
+                            ' ',
+                            '* The name can only have up to 12 characters')
         return
-    elif choice in xrange(1, 7):
-        option = {1: ('Add New Admin', 'Choose The New Admin:', add_admin),
-                  2: ('Remove An Admin', 'Choose An Admin:', remove_AdminOrGroup),
-                  3: ('Admins Profiles', 'Choose The Admin:', profile_editor),
-                  5: ('Delete a Group', 'Choose The Group To Be Deleted:', remove_AdminOrGroup),
-                  6: ('Groups Profiles', 'Choose A Group:', profile_editor)}[choice]
-        menu = sam.Menu('admins_groups_list', option[2], submenu)
-        menu.title(option[0])
-        menu.description(option[1])
-        if choice == 1:
-            users = [u for u in sam.player_list('#human') if not sam.admins.is_admin(u)]
-            if not bool(users):
-                sam.msg.hud(uid, 'There aren\'t any valid players in the server')
-                submenu.send(uid)
-                return
-            for u in users:
-                menu.add_option(u, u.name)
-        elif choice in (2, 3):
-            for k, v in sam.admins.items():
-                name = v['name'] + ' [Super Admin]' if v['super_admin'] else v['name']
-                menu.add_option(k, name)
-        elif choice in (5, 6):
-            if not bool(sam.admins('groups')):
-                sam.msg.hud(uid, 'There aren\'t any groups available')
-                submenu.send(uid)
-                return
-            for k, v in sam.admins.items('groups'):
-                menu.add_option(k, sam.title(v['name']))
-        menu.send(uid)
+    # Dictionary mapping choice to option tuple
+    option = {
+        1: ('Add New Admin', 'Choose the new Admin:', add_admin),
+        2: ('Remove An Admin', 'Choose the Admin to remove:', remove_admin_or_group),
+        3: ('Admins Profile Editor', 'Choose an Admin:', profile_editor),
+        5: ('Delete a Group', 'Choose the Group to delete:', remove_admin_or_group),
+        6: ('Groups Profile Editor', 'Choose a Group:', profile_editor)
+    }.get(choice)
+    # Check for an invalid option
+    if option is None:
+        submenu.send(userid)
         return
-    submenu.send(uid)
-
-
-def add_admin(uid, user, submenu=False, super_admin=False):
-    user = sam.get_player(user)
-    sam.admins.admins[user.steamid] = {'super_admin': super_admin,
-                                       'name': user.name.encode('utf-8'),
-                                       'group': None,
-                                       'immunity_level': 0,
-                                       'ban_level': 0,
-                                       'since': sam.get_time('%m/%d/%Y')}
-    for i in sam.admins.flags:
-        sam.admins.admins[user.steamid][i] = False
-    if submenu:
-        profile_editor(uid, user.steamid)
-
-
-def remove_AdminOrGroup(uid, target, submenu):
-    module_menu(uid)
-    if target in sam.admins.list('groups'):
-        sam.msg.hud(uid, '%s group has been deleted' % sam.admins(target, 'name'))
-        del sam.admins.groups[target]
-        for admin in sam.admins.list():
-            if sam.admins(admin)['group'] == target:
-                sam.admins.admins[admin]['group'] = None
-        return
-    if sam.admins.is_admin(target):
-        admin = sam.admins(target)
-        if sam.getsid(uid) == target:
-            sam.msg.hud(uid, 'You cannot remove yourself as Admin')
-            submenu.send(uid)
-            return
-        elif admin['super_admin'] and not sam.admins.can(uid, 'super_admin'):
-            sam.msg.hud(uid, '%s is a Super Admin, and can\'t be removed' % admin['name'])
-            submenu.send(uid)
-        else:
-            sam.msg.hud(uid, '%s has been removed from Admins' % (admin['name']))
-            del sam.admins.admins[target]
-            target = sam.getuid(target)
-            if target:
-                sam.handle_choice(10, target, True)
-                sam.msg.hud(target,
-                            'Your Admin permissions have been removed!',
-                            'Any active pages have been closed for security reasons.')
-            module_menu(uid)
-            sam.handle_choice(2, uid)
-    else:
-        sam.msg.hud(uid, '%s is not a valid Admin or Group' % target)
-
-
-def profile_editor(uid, target, submenu, page=1):
-    if not sam.admins.can(uid, 'admins_manager'):
-        sam.home_page(uid)
-        return
-    data = sam.admins(target)
-
-    def f(b):
-        return 'Yes' if b else 'No'
-
-    menu = sam.Menu('profile_editor', profile_editor_HANDLER, submenu)
-    menu.title('Edit Flags')
-    if sam.admins.is_admin(target):
-        if not sam.admins(sam.getsid(uid), 'super_admin') and data['super_admin']:
-            sam.msg.hud(uid, 'You are not allowed manage Super Admins')
-            return
-        menu.description('* NAME: ' + data['name'],
-                         '* STEAMID: ' + target,
-                         '* SINCE: ' + data['since'])
-        menu.add_option((target, 'super_admin'), 'Super Admin: %s' % f(data['super_admin']))
-        menu.add_option((target, 'admin_group'), 'Admin Group: ' + sam.title(data['group']))
-    else:
-        menu.description('* GROUP NAME: ' + sam.title(data['name']))
-        menu.add_option((target, 'members'), 'Group Members (%s)' %
-                        len([i for i in sam.admins.list() if sam.admins(i)['group'] == target]))
-        menu.add_option((target, 'group_color'), 'Group Color: ' + sam.title(data['color']))
-    menu.add_option((target, 'ban_level'), 'Ban Level: %s' % data['ban_level'])
-    menu.add_option((target, 'immunity_level'), 'Immunity Level: %s' % data['immunity_level'])
-    if sam.admins.is_admin(target):
-        menu.maxlines = 5
-        menu.next_page()
-        menu.add_line('Permissions:')
-    for i in sorted(sam.admins.flags):
-        menu.add_option((target, i), '%s: %s' % (sam.title(i), f(data[i])))
-    menu.send(uid, page)
-
-
-def profile_editor_HANDLER(uid, choice, submenu):
-    target, flag = choice
-    data = sam.admins(target)
-    if flag == 'admin_group':
-        groups = sam.admins('groups')
-        if bool(groups):
-            menu = sam.Menu('am_set_group', set_group_HANDLER, submenu)
-            menu.title('Edit Admins Profiles')
-            menu.description('Choose A Group:')
-            if data['group']:
-                menu.add_option((target, 1), 'Remove From Current Group')
-            for g in groups.keys():
-                menu.add_option((target, g), sam.title(g))
-            menu.send(uid)
-            return
-        else:
-            sam.msg.hud(uid, 'There aren\'t any Admin groups available')
-    elif flag == 'members':
-        menu = sam.Menu('am_choose_members', set_group_members_HANDLER, submenu)
-        menu.title('%s Group Members' % sam.title(target))
-        menu.description('Choose an Admin to either assign',
-                         'assign to or remove from this:')
-        for i in sam.admins.list():
-            a = sam.admins(i)
-            menu.add_option((target, i), '%s%s' % \
-                            (a['name'],
-                             ' [%s]' % sam.title(a['group']) if a['group'] else ''))
-        menu.send(uid)
-        return
-    elif flag == 'group_color':
-        menu = sam.Menu('am_choose_group_color', set_group_color_HANDLER, submenu)
-        menu.title('%s Group Color' % sam.title(target))
-        menu.description('Choose A Color:')
-        for color in sorted(sam.msg.colors.keys()):
-            menu.add_option((target, color), sam.title(color))
-        menu.footer('This color will be used to colorize',
-                    'the group name in the game chat')
-        menu.send(uid)
-        return
-    elif flag == 'immunity_level':
-        menu = sam.Menu('am_choose_immunity', set_immunity_HANDLER, submenu)
-        menu.title('Edit Flags')
-        menu.description('- Choose the immunity level')
-        menu.add_option((target, 0), 0)
-        for i in xrange(1, 11):
-            i *= 10
-            menu.add_option((target, i), i)
-        menu.send(uid)
-        return
-    elif flag == 'super_admin':
-        sid = sam.getsid(uid)
-        if not sam.admins(sid, 'super_admin'):
-            sam.msg.hud(uid, 'You are not allowed to set/remove Super Admins')
-        elif sid == target and len([k for k, v in sam.admins.items()
-                                    if v['super_admin']]) < 2:
-            sam.msg.hud(uid,
-                        'Action denied, SAM requires at least one Super Admin to operate')
-        else:
-            data['super_admin'] = not data['super_admin']
-    elif flag == 'ban_level':
-        lvl = int(data['ban_level'])
-        data['ban_level'] = lvl + 1 if lvl < 3 else 0
-    elif flag in sam.admins.flags:
-        data[flag] = not data[flag]
-    profile_editor(uid, target, submenu.object.submenu, submenu.page)
-
-
-def set_group_color_HANDLER(uid, choice, submenu):
-    target, color = choice
-    sam.admins.groups[target]['color'] = color
-    sam.msg.hud(uid, '%s color is now %s' % (sam.title(target), color))
-    profile_editor(uid, target, 'admins_manager')
-
-
-def set_group_members_HANDLER(uid, choice, submenu):
-    target, admin = choice
-    if not sam.admins.can(uid, 'super_admin') and sam.admins.can(admin, 'super_admin'):
-        sam.msg.hud(uid, 'You can\'t change Super Admins groups')
-    elif sam.admins(admin)['group'] != target:
-        sam.admins.admins[admin]['group'] = target
-        sam.msg.hud(uid, '%s assigned to %s group' % (sam.admins(admin)['name'], sam.title(target)))
-    else:
-        sam.admins.admins[admin]['group'] = None
-        sam.msg.hud(uid, '%s removed from %s group' %
-                    (sam.admins(admin)['name'], sam.title(target)))
-    profile_editor(uid, target, 'admins_manager')
-
-
-def set_group_HANDLER(uid, choice, submenu):
-    target, group = choice
-    sam.admins.admins[target]['group'] = None if group == 1 else group
-    name = sam.admins(target)['name']
-    sam.msg.hud(uid, '%s assigned to %s group' %
-                     (name,
-                      sam.title(target)) if group else 'Removed %s from the group' % name)
-    profile_editor(uid, target, 'admins_manager')
-
-
-def set_immunity_HANDLER(uid, choice, submenu):
-    target, lvl = choice
-    dat = sam.admins(target)
-    dat['immunity_level'] = lvl
-    sam.msg.hud(uid, 'Changed %s immunity level to %s' % (dat['name'], lvl))
-    profile_editor(uid, target, 'admins_manager')
-
-
-def first_admin_setup(uid):
-    menu = sam.Menu('first_admin_setup', first_admin_setup_HANDLE)
-    menu.title('First Admin Setup')
-    menu.add_line('Hi ' + es.getplayername(uid),
-                 ' ',
-                 'SAM requires at least one Super Admin to be operate.',
-                 'Do you want to setup yourself as Super Admin?')
-    menu.add_option(1, 'Yes, proceed')
-    menu.add_option(2, 'No')
-    menu.send(uid)
-
-
-def first_admin_setup_HANDLE(uid, choice, submenu):
+    # Initialize the menu
+    menu = sam.Menu('am_admins_or_groups_list', option[2], 'admins_manager')
+    menu.title(option[0])
+    menu.description(option[1])
+    # Start the process of adding a new Admin
     if choice == 1:
-        del sam.cache.pages['first_admin_setup']
-        sam.chat_filters.create('first_admin_setup', _first_admin_FILTER, True, uid)
-        menu = sam.Menu('rcon_verification')
-        menu.header_text = False
-        menu.title('First Admin Setup')
-        menu.add_line('Good! Now SAM needs to verify you are',
-                     'a server Owner/Operator, to do so:',
-                     ' ',
-                     '* Type in the chat the server RCON password',
-                     '* To cancel this operation type !cancel')
-        menu.close_option = False
-        menu.send(uid)
+        # Get the list of non-admins players
+        players = [i for i in sam.player_list() if not sam.admins.is_admin(i)]
+        # Check if there are any players to be added as admins
+        if not players:
+            sam.msg.hud(userid, 'There are no valid players to be added as admins')
+            submenu.send(userid)
+            return
+        # Add the players to the menu
+        menu.add_options([(player, player.name) for player in players])
+    # For both option 2 and 3, we need the list of admins
+    elif choice in (2, 3):
+        admins = sam.admins.list().values()
+        menu.add_options([
+            (admin.steamid,
+             '%s [Super Admin]' % admin.name if admin.super_admin else admin.name)
+            for admin in admins
+        ])
+    # For both option 5 and 6, we need the list of groups
+    elif choice in (5, 6):
+        groups = sam.admins.list('groups')
+        # Check if there are any groups available
+        if not len(groups):
+            sam.msg.hud(userid, 'There are no groups available')
+            submenu.send(userid)
+            return
+        menu.add_options([(group, groups[group].name) for group in groups])
+    # Send the menu to the player
+    menu.send(userid)
+
+
+def add_admin(userid, user, submenu=False, super_admin=False):
+    """ Adds a new admin to the Admins list """
+
+    # Get the steamid of the player
+    steamid = sam.get_steamid(user)
+    # Check if the player is already an admin
+    if sam.admins.is_admin(steamid):
+        sam.msg.hud(userid, 'This player is already an admin')
+        submenu.send(user)
+        return
+    # Initialize the new Admin object
+    sam.admins.new_admin(steamid, super_admin)
+    sam.msg.hud('#admins', '%s is now an Admin!' % user.name)
+    # Send the player to the Profile Editor of the new Admin
+    profile_editor(userid, steamid, 'admins_manager')
+
+
+def remove_admin_or_group(userid, object, submenu):
+    """ Removes an admin from the Admins list or deletes a group """
+
+    # Send the user back to the module's menu either way
+    module_menu(userid)
+    # If the object is a group, delete it
+    if object in sam.admins.list('groups'):
+        sam.msg.hud(userid, '%s group deleted!' % sam.admins(object).name)
+        sam.admins.delete_group(object)
+        return
+    # Else check if the object is an admin
+    elif sam.admins.is_admin(object):
+        # Get the admin object
+        admin = sam.admins(object)
+        # Check if the user is trying to remove himself
+        if admin.steamid == sam.get_steamid(userid):
+            sam.msg.hud(userid, 'You cannot remove yourself from the admins list')
+            submenu.send(userid)
+            return
+        # If the admin to be removed is a super admin and the player trying to remove
+        # them is not a super admin, then we should not allow the removal at all
+        elif admin.super_admin and not sam.admins.is_super_admin(userid):
+            sam.msg.hud(userid, 'You cannot remove a Super Admins')
+            submenu.send(userid)
+            return
+        sam.msg.hud('#admins', 'Admin %s deleted from the admins list!' % admin.name)
+        # Check if user is active
+        player = sam.get_userid(admin.steamid)
+        if player:
+            # Notify the player that he has been removed
+            sam.msg.hud(admin.steamid,
+                        'You have been removed from the admins list!',
+                        'Your active menu has been closed as a safety measure.')
+            # Close the Admin active menu if it's open
+            sam.handle_choice(None, player, force_close=True)
+        # Delete the admin
+        sam.admins.delete_admin(object)
+
+
+def profile_editor(userid, object, submenu):
+    """ Edits the profile of an admin or a group """
+
+    # Save the database in case something was previously changed and not saved
+    sam.admins.save_database()
+    # Check if the player is allowed to access the module
+    if not sam.admins.is_allowed(userid, 'admins_manager'):
+        sam.home_page(userid)
+        return
+    is_admin = sam.admins.is_admin(object)
+    target = sam.admins(object)
+    # Check if the player is trying to edit a Super Admin profile
+    if is_admin and not sam.admins.is_super_admin(userid) and target.super_admin:
+        sam.msg.hud(userid, 'You cannot edit a Super Admin profile')
+        submenu.send(userid)
+        return
+    # Initialize the menu
+    menu = sam.Menu('am_profile_editor', profile_editor_HANDLE, 'admins_manager')
+    menu.max_lines = 5 if is_admin else 6
+    menu.title('%s Profile Editor' % 'Admins' if is_admin else 'Groups')
+    # If target is an Admin:
+    if is_admin:
+        menu.description('* NAME: ' + target.name,
+                         '* STEAMID: ' + target.steamid,
+                         '* SINCE: ' + target.admin_since)
+        menu.add_options([
+            ((object, 'super_admin'), 'Super Admin: ' + yes_or_no(target.super_admin)),
+            ((object, 'admin_group'), 'Admin Group: ' + sam.title(target.group))
+        ])
+    # If target is a Group:
+    else:
+        menu.description('* GROUP NAME: ' + target.name)
+        menu.add_options([
+            ((object, 'members'),
+             'Group Members: (%s)' % len(sam.admins.get_group_members(object))),
+            ((object, 'rename'), 'Rename Group'),
+            ((object, 'color'), 'Group Color: ' + sam.title(target.color))
+        ])
+    menu.add_options([
+        ((object, 'ban_level'), 'Ban Level: %s' % target.ban_level),
+        ((object, 'immunity'), 'Immunity Level: %s' % target.immunity_level),
+        ((object, 'addons'), 'Addons Permissions')
+    ])
+    # At last, list all the Admin permissions on a new page
+    menu.next_page()
+    menu.add_line('Permissions:')
+    # Finally, list all the permissions
+    menu.add_options([
+        ((object, permission),
+         '%s: %s' % (sam.title(permission), yes_or_no(target.permissions[permission])))
+        for permission in sorted(target.permissions)
+    ])
+    # Send the menu to the player
+    menu.send(userid)
+
+
+def profile_editor_HANDLE(userid, choice, submenu):
+    """ Handles the profile editor menu choice """
+
+    object, key = choice
+    is_admin = sam.admins.is_admin(object)
+    target = sam.admins(object)
+    # Check if Admin/Group still exists
+    if not target:
+        invalid_admin_group(userid, is_admin)
+        return
+    # In case the chosen key requires a menu to be displayed, we use a dictionary
+    # to store the menu_id, handler, submenu, title and description.
+    options = {
+        'admin_group': (
+            ('am_change_admin_group', change_admin_group_HANDLE, 'am_profile_editor'),
+            'Change Admin Group',
+            'Select the Admin Group:'
+        ),
+        'members': (
+            ('am_edit_group_members', edit_group_members_HANDLE, 'am_profile_editor'),
+            'Groups Profile Editor',
+            'Edit Group Members:'
+        ),
+        'color': (
+            ('am_change_group_color', change_group_color_HANDLE, 'am_profile_editor'),
+            'Groups Profile Editor',
+            'Select the Group Color:'
+        ),
+        'immunity': (
+            ('am_change_immunity_level', change_immunity_level_HANDLE, 'am_profile_editor'),
+            '%s Profile Editor' % ('Admins' if is_admin else 'Groups'),
+            'Choose Immunity Level:'
+        ),
+        'addons': (
+            ('am_change_addons', addons_permissions_HANDLE, 'am_profile_editor'),
+            'Addons Permissions',
+            'Select the permissions:'
+        ),
+    }
+    if key not in options:
+        if key == 'super_admin':
+            # Check if the user is allowed to manage Super Admins
+            if not sam.admins.is_super_admin(userid):
+                sam.msg.hud(userid, 'Only Super Admins can manage other Super Admins')
+
+            elif len(sam.admins.list('super_admins')) == 1 \
+                    and sam.get_steamid(userid) == target.steamid:
+                sam.msg.hud(userid,
+                            'Unable to perform this action!',
+                            'SAM requires one Super Admin to function properly')
+            else:
+                target.super_admin = not target.super_admin
+        elif key == 'rename':
+            sam.cache.temp[userid] = object
+            f = sam.chat_filter.register('rename_admin_group', userid)
+            f.function = rename_admin_group_FILTER
+            f.cancel_option = module_menu
+            f.cancel_args = ('userid',)
+            f.instructions_page('Type in the chat name of the group',
+                                ' ',
+                                '* The name can only have up to 12 characters')
+            return
+        elif key == 'ban_level':
+            target.ban_level = (target.ban_level + 1) % 4
+        elif key in target.permissions.keys():
+            target.toggle_permission(key)
+        # Send the user back to the profile editor menu
+        profile_editor(userid, object, submenu.object.submenu)
+        sam.send_menu(userid, submenu.menu_id, submenu.page)
+        return
+    menu_setup, title, description = options[key]
+    # Initialize the menu
+    menu = sam.Menu(*menu_setup)
+    menu.title(title)
+    menu.description(description)
+    if key == 'admin_group':
+        groups = sam.admins.list('groups')
+        # Check if there are any groups available
+        if not groups:
+            sam.msg.hud(userid, 'There are no groups available at the moment')
+            submenu.send(userid)
+            return
+        # Add an option to remove the admin from his current group
+        if target.group:
+            menu.add_option((object, 'remove'), 'Remove from current group')
+        # Add the groups as options
+        for group in groups:
+            menu.add_option((object, group),
+                            sam.title(group) + ' (current)'
+                            if group == target.group else sam.title(group))
+    elif key == 'members':
+        for admin in sam.admins.list().values():
+            # Compile the text for each option
+            text = '%s %s' % ('[ X ]' if admin.group == object else '[ - ]', admin.name)
+            if admin.group and admin.group != object:
+                text += ' (%s)' % sam.title(admin.group)
+            menu.add_option((object, admin.steamid), text)
+        menu.footer('- Selecting an Admin will add him to the group',
+                    '- Selected Admins will be removed from the group')
+    elif key == 'color':
+        for color in sorted(sam.msg.colors.keys()):
+            menu.add_option((object, color), sam.title(color))
+    elif key == 'immunity':
+        for level in range(0, 101):
+            menu.add_option((object, level), level)
+        menu.footer('Current Level: %s' % target.immunity_level)
+    elif key == 'addons':
+        for perm, val in target.addons_permissions.items():
+            menu.add_option((object, perm), sam.title(perm) + ': ' + yes_or_no(val))
+    # Send the menu
+    menu.send(userid)
+
+
+def change_admin_group_HANDLE(userid, choice, submenu):
+    """ Handles the change admin group menu choice """
+
+    # Get the admin object
+    object, group = choice
+    admin = sam.admins(object)
+    # Check if the admin still exists
+    if not admin:
+        invalid_admin_group(userid, True)
+        return
+    # If the choice is 'remove', remove the admin from his current group
+    if group == 'remove':
+        sam.msg.hud('#admins', '%s removed from %s group' % (admin.name,
+                                                             sam.title(admin.group)))
+        admin.group = False
+    # Else if the player is trying to add the admin to the group
+    else:
+        sam.msg.hud('#admins', '%s added to %s group' % (admin.name, sam.title(group)))
+        admin.group = group
+    # Send the user directly to the profile editor
+    profile_editor(userid, object, 'admins_manager')
+
+
+def edit_group_members_HANDLE(userid, choice, submenu):
+    """ Handles the edit group members menu choice """
+
+    # Get the admin object
+    object, admin = choice
+    admin = sam.admins(admin)
+    # Check if the admin still exists
+    if not admin:
+        invalid_admin_group(userid, True)
+    # If the admin is already in the group, remove him
+    elif admin.group == object:
+        sam.msg.hud('#admins', admin.name + ' removed from %s group' % admin.group)
+        admin.group = False
+    # Otherwise, add him to the group
+    else:
+        admin.group = object
+        sam.msg.hud('#admins', admin.name + ' added to %s group' % admin.group)
+
+    # Send the user back to the Group Members menu
+    profile_editor_HANDLE(userid, (object, 'members'), 'am_profile_editor')
+    sam.send_menu(userid, submenu.menu_id, submenu.page)
+
+
+def change_group_color_HANDLE(userid, choice, submenu):
+    """ Handles the change group color menu choice """
+
+    object, color = choice
+    group = sam.admins(object)
+    # Set the color
+    group.color = color
+    group._attach_color()
+    # Send the user back to the Profile Editor menu
+    profile_editor(userid, object, 'admins_manager')
+
+
+def change_immunity_level_HANDLE(userid, choice, submenu):
+    """ Handles the change immunity level menu choice """
+
+    # Get the target object
+    object, choice = choice
+    is_admin = sam.admins.is_admin(object)
+    target = sam.admins(object)
+    # Check if either the Admin or the Group still exists
+    if not target:
+        invalid_admin_group(userid, is_admin)
+        return
+    # Set the immunity level
+    target.immunity_level = choice
+    sam.msg.hud('#admins', target.name + '%s immunity level set to %s' %
+                ('\'s' if is_admin else ' group', choice))
+    # Send the user back to the Profile Editor menu
+    profile_editor(userid, object, 'admins_manager')
+
+
+def addons_permissions_HANDLE(userid, choice, submenu):
+    """ Handles the Addons permissions menu choice """
+
+    object, choice = choice
+    target = sam.admins(object)
+    # Check if either the Admin or the Group still exists
+    if not target:
+        invalid_admin_group(userid, sam.admins.is_admin(target))
+        return
+    # Toggle the permission
+    target.toggle_permission(choice)
+    # We need to build the menu again since changes were made to the Admin/Group object
+    profile_editor_HANDLE(userid, (object, 'addons'), 'am_profile_editor')
+    sam.send_menu(userid, submenu.menu_id, submenu.page)
+
+
+# First Admin Setup
+def first_admin_setup(userid):
+    """ Displays the First Admin Setup menu """
+
+    # Initialize the menu
+    menu = sam.Menu('first_admin_setup', first_admin_setup_HANDLE)
+    menu.header = False
+    menu.title('First Admin Setup')
+    menu.add_line('Hello %s' % es.getplayername(userid),
+                  ' ',
+                  'SAM requires one Admin to be set up before it can be used.',
+                  'If you are the server owner/operator and want to',
+                  'set yourself up as Admin, choose to proceed.',
+                  ' ')
+    menu.add_option(1, 'Yes, Proceed')
+    menu.add_option(2, 'No, I\'m not the server owner/operator')
+    # Send the menu
+    menu.send(userid)
+
+
+def first_admin_setup_HANDLE(userid, choice, submenu):
+    """ Handles the First Admin Setup menu choice """
+
+    if choice in (1, 2):
+        del sam.cache.menus['first_admin_setup']
+    # If the user chooses to proceed, then start the RCON verification process
+    if choice == 1:
+        # Register a chat filter to get the name of the new group
+        f = sam.chat_filter.register('rcon_verification', userid)
+        f.function = rcon_verification_FILTER
+        f.cancel_option = True
+        f.instructions_page('In order to proceed, SAM needs to verify that you are',
+                            'the server owner/operator.',
+                            'Please type the server RCON password in the chat.')
 
 
 # Chat Filters
-def _first_admin_FILTER(uid, text, teamchat):
-    sam.handle_choice(10, uid, True)
-    if not sam.chat_filters.is_allowed(uid, 'first_admin_setup'):
-        return uid, text, teamchat
-    sam.chat_filters.remove('first_admin_setup', _first_admin_FILTER)
-    del sam.cache.pages['rcon_verification']
-    text = text.strip('"')
-    if text == '!cancel':
-        sam.msg.hud(uid, 'Operation Canceled!')
-        return 0, 0, 0
-    elif text == str(es.ServerVar('rcon_password')):
-        add_admin(uid, sam.get_player(uid), super_admin=True)
-        sam.msg.side(uid, 'Great, RCON Password Confirmed!',
-                     'You are now a Super-Admin, use !sam command to open the menu')
-        sam.home_page(uid)
+def rcon_verification_FILTER(userid, text, teamchat):
+    """ Handles the RCON verification chat filter """
+
+
+    print(1)
+
+    # Check if the user entered the correct RCON password
+    if text == es.ServerVar('rcon_password'):
+        # Create the Admin object
+        sam.admins.new_admin(sam.get_steamid(userid), super_admin=True)
+        # Send the user to the Home Page
+        sam.home_page(userid)
+        sam.msg.hud(userid,
+                    'RCON Password confirmed!',
+                    'You are now a Super Admin, type !sam in chat to access the menu.',
+                    'It is also recommended to make a key bind: bind <key> sam_menu')
+    # Otherwise, notify the user that the RCON password is incorrect
     else:
-        sam.msg.hud(uid, 'RCON Password does not match, access denied!',
-                         'Operation Canceled')
+        sam.msg.hud(userid, 'RCON Password incorrect! Operation cancelled!')
     return 0, 0, 0
 
 
-def _new_group_FILTER(uid, text, teamchat):
-    if not sam.chat_filters.is_allowed(uid, 'new_admin_group'):
-        return uid, text, team
-    sam.chat_filters.remove_user(uid, 'new_admin_group')
-    text = text.strip('"').lower()
+def admin_group_creation_FILTER(userid, text, teamchat):
+    """ Handles the Admin Group Creation chat filter """
+
+    # Remove the user from the chat filter
+    sam.chat_filter.remove_user(userid, 'admin_group_creation')
+    # Send the user to the Module Page in case the operation is canceled
+    module_menu(userid)
+    # Check if the user canceled the operation
+    text = sam.compile_text(text).lower()
     if text == '!cancel':
-        sam.msg.hud(uid, 'Operation Canceled!')
-        module_menu(uid)
+        sam.msg.hud(userid, 'Operation cancelled!')
         return 0, 0, 0
+    # Check if the name has more than 12 characters
+    if len(text) > 12:
+        sam.msg.hud(userid, 'The name must be less than 12 characters!',
+                    'Operation cancelled!')
+    elif text in sam.admins.groups.keys():
+        sam.msg.hud(userid, 'This group already exists!',
+                    'Operation cancelled!')
     else:
-        key = text.lower().replace(' ', '_')
-        if key not in sam.admins.list('groups'):
-            sam.admins.groups[key] = {'name': key,
-                                      'ban_level': 0,
-                                      'immunity_level': 0,
-                                      'color': sam.random(sam.msg.colors.keys())}
-            for i in sam.admins.flags:
-                sam.admins.groups[key][i] = False
-            profile_editor(uid, key, 'admins_manager')
-        else:
-            sam.msg.hud(uid, 'Action denied, %s group already exists!' % (text.title()))
-            module_menu(uid)
+        sam.admins.new_group(text)
+        sam.msg.hud('#admins', 'Group %s created!' % text)
+        profile_editor(userid, text, 'admins_manager')
     return 0, 0, 0
 
 
-# Game Events
-def player_activate(ev):
-    u = int(ev['userid'])
-    if sam.admins.is_admin(u):
-        sam.admins.update_admin(u)
+def rename_admin_group_FILTER(userid, text, teamchat):
+    """ Handles the Admin Group Rename chat filter """
+
+    # Delete the chat filter
+    sam.chat_filter.remove_user(userid, 'rename_admin_group')
+    # Send the user to the Module Page in case the operation is canceled
+    module_menu(userid)
+    text = sam.compile_text(text).lower()
+    # Check if the name has more than 12 characters
+    if len(text) > 12:
+        sam.msg.hud(userid, 'The name must be less than 12 characters!',
+                    'Operation cancelled!')
+    elif text in sam.admins.groups.keys():
+        sam.msg.hud(userid, 'This group already exists!', 'Operation cancelled!')
+    elif userid in sam.cache.temp.keys():
+        key = sam.cache.temp[userid]
+        sam.msg.hud('#admins',
+                    'Renamed %s group to %s created!' % (sam.admins(key).name, text))
+        sam.admins.groups[text] = sam.admins.groups.pop(key)
+        sam.admins.groups[text].id = text
+        sam.admins.groups[text]._attach_color()
+        profile_editor(userid, text, 'admins_manager')
+        del sam.cache.temp[userid]
+    return 0, 0, 0
+
+
+# Functions
+def yes_or_no(boolean):
+    """ Returns Yes or No based on the boolean value """
+    return 'Yes' if boolean else 'No'
+
+
+def invalid_admin_group(userid, is_admin):
+    """ Displays an error message when the admin or group doesn't exist anymore """
+    sam.msg.hud(userid,
+                'This ' + 'admin' if is_admin else 'group' + ' does not exist anymore')
+    module_menu(userid)

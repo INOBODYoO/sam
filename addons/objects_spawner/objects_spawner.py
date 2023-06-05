@@ -113,7 +113,7 @@ def objects_spawner_HANDLE(uid, choice, submenu):
                         categorys_list_HANDLE,
                         'objects_spawner')
         menu.title('Objects Spawner')
-        menu.maxlines = 8
+        menu.max_lines = 8
         menu.description('Choose a category of objects:')
         for category in sorted(OBJECTS.keys()):
             menu.add_option(category, sam.title(category))
@@ -294,7 +294,7 @@ def delete_all(uid):
 
 
 def view_object(uid):
-    view = '%s_view_object' % sam.getsid(uid)
+    view = '%s_view_object' % sam.get_steamid(uid)
     entities = es.createentitylist().keys()
     entities_names = dict((i, es.entitygetvalue(i, 'targetname')) for i in entities)
     es.entsetname(uid, view)

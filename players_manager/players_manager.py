@@ -33,10 +33,10 @@ class _PenaltiesClass:
     def respawn(target):
         def f(*targets):
             for ply in targets:
-                uid = int(ply)
-                setprop(uid, 'CCSPlayer.m_iPlayerState', 0)
-                setprop(uid, lifestate, 0)
-                es.server.insertcmd('es_xspawnplayer %s' % uid)
+                userid = int(ply)
+                setprop(userid, 'CCSPlayer.m_iPlayerState', 0)
+                setprop(userid, lifestate, 0)
+                es.server.insertcmd('es_xspawnplayer %s' % userid)
 
         if target in teams.keys():
             f(*sam.player_list(target))
@@ -94,13 +94,13 @@ class _PenaltiesClass:
 
     @staticmethod
     def blind(target):
-        uid = int(target)
-        effect = effects[uid]
+        userid = int(target)
+        effect = effects[userid]
         if effect.blind:
-            sam.cancel_delay('blind_%s' % uid)
+            sam.cancel_delay('blind_%s' % userid)
             text = '#cyanAdmin #whitehas removed blindness off #red%s' % target.name
         else:
-            _blind_loop(uid)
+            _blind_loop(userid)
             text = '#cyanAdmin #whitehas blinded #red%s' % target.name
         effect.blind = not effect.blind
         msg(text)
@@ -155,18 +155,18 @@ class _PenaltiesClass:
 
     @staticmethod
     def freeze(target):
-        # Get the object from the effects dictionary
-        obj = effects[target]
-
-        # Toggle the state
-        obj.frozen = not obj.frozen
-        target.freeze(not obj.frozen)
+        # Get the object from the effect dictionary
+        obj = effects[int(target)]
 
         # Construct a message indicating the new state
-        if obj.frozen:
-            message = 'Admin has frozen %s' % obj.name
+        if target.freeze:
+            obj.freeze = False
+            target.freeze = False
+            message = '#cyanAdmin #whitehas unfrozen #red%s' % target.name
         else:
-            message = 'Admin has unfrozen %s' % obj.name
+            obj.freeze = True
+            target.freeze = True
+            message = '#cyanAdmin #whitehas frozen #red%s' % target.name
         msg(message)
 
     @staticmethod
@@ -234,8 +234,8 @@ penalties = {1: ('Kick', penalty.kick),
 
 
 class PlayerEffects:
-    def __init__(self, uid):
-        self.uid = uid
+    def __init__(self, userid):
+        self.userid = userid
         self.blind = False
         self.onfire = False
         self.noclip = False
@@ -245,7 +245,7 @@ class PlayerEffects:
         self.jetpack = False
 
     def remove_all(self):
-        ply = sam.get_player(self.uid)
+        ply = sam.get_player(self.userid)
         if not ply:
             return
         if self.blind:
@@ -265,31 +265,31 @@ class PlayerEffects:
 
 
 def load():
-    for uid in es.getUseridList():
-        cache_player(uid)
+    for userid in es.getUseridList():
+        cache_player(userid)
     sam.cmds.chat('kick', kick_CMD)
 
 
 def unload():
     sam.cmds.delete('!kick')
-    for uid in effects:
-        effects[uid].remove_all()
+    for userid in effects:
+        effects[userid].remove_all()
 
 
-def module_menu(uid):
-    if not sam.admins.can(uid, 'players_manager'):
-        sam.home_page(uid)
+def module_menu(userid):
+    if not sam.admins.is_allowed(userid, 'players_manager'):
+        sam.home_page(userid)
         return
     menu = sam.Menu('players_manager', players_manager_HANDLE, 'home_page')
     menu.title('Players Manager')
     for penalty in sorted(penalties.keys()):
         menu.add_option(penalty, penalties[penalty][0])
-    menu.send(uid)
+    menu.send(userid)
 
 
-def players_manager_HANDLE(uid, pid, submenu):
-    if pid == 1 and not sam.admins.can(uid, 'kick_players'):
-        module_menu(uid)
+def players_manager_HANDLE(userid, pid, submenu):
+    if pid == 1 and not sam.admins.is_allowed(userid, 'kick_players'):
+        module_menu(userid)
         return
     penalty = penalties[pid]
     menu = sam.Menu('pm_choose_player', choose_player_HANDLE, submenu)
@@ -302,14 +302,14 @@ def players_manager_HANDLE(uid, pid, submenu):
         menu.separator()
     for ply in sam.player_list():
         menu.add_option((ply, pid), ply.name)
-    menu.send(uid)
+    menu.send(userid)
 
 
-def choose_player_HANDLE(uid, choice, submenu):
+def choose_player_HANDLE(userid, choice, submenu):
     target, pid = choice
     penalty = penalties[pid]
-    if pid not in (4, 5, 6) and not sam.admins.immunity_check(uid, target.steamid):
-        submenu.send(uid)
+    if pid not in (4, 5, 6) and not sam.admins.compare_immunity(userid, target.steamid):
+        submenu.send(userid)
         return
     if pid == 4:
         menu = sam.Menu('pm_cash_amount', cash_amount_HANDLE, submenu)
@@ -318,7 +318,7 @@ def choose_player_HANDLE(uid, choice, submenu):
         menu.add_option((target, 0), 'Remove Cash')
         for num in range(800, 16001, 800):
             menu.add_option((target, num), num)
-        menu.send(uid)
+        menu.send(userid)
         return
     elif pid == 5:
         menu = sam.Menu('pm_health_amount', health_amount_HANDLE, submenu)
@@ -327,69 +327,70 @@ def choose_player_HANDLE(uid, choice, submenu):
         menu.add_option((target, 1), 1)
         for num in range(5, 101, 5):
             menu.add_option((target, num), num)
-        menu.send(uid)
+        menu.send(userid)
         return
     elif pid in (2, 6) or is_alive(target):
         penalty[1](target)
     else:
-        sam.msg.hud(uid, 'Penalty not given, player must be alive.')
-    submenu.send(uid)
+        sam.msg.hud(userid, 'Penalty not given, player must be alive.')
+    submenu.send(userid)
 
 
-def cash_amount_HANDLE(uid, choice, submenu=None):
+def cash_amount_HANDLE(userid, choice, submenu=None):
     penalty.set_cash(choice[0], choice[1])
-    submenu.send(uid)
+    submenu.send(userid)
 
 
-def health_amount_HANDLE(uid, choice, submenu=None):
+def health_amount_HANDLE(userid, choice, submenu=None):
     penalty.set_health(choice[0], choice[1])
-    submenu.send(uid)
+    submenu.send(userid)
 
 
 def player_connect(ev):
-    uid = int(ev['userid'])
-    if uid not in effects:
-        cache_player(uid)
+    userid = int(ev['userid'])
+    if userid not in effects:
+        cache_player(userid)
 
 
 def player_disconnect(ev):
-    uid = int(ev['userid'])
-    if uid in effects:
-        del effects[uid]
+    userid = int(ev['userid'])
+    if userid in effects:
+        del effects[userid]
 
 
 def player_death(ev):
-    uid = int(ev['userid'])
-    if uid in effects:
-        effects[uid].remove_all()
+    userid = int(ev['userid'])
+    if userid in effects:
+        effects[userid].remove_all()
     else:
-        cache_player(uid)
+        cache_player(userid)
 
 
-def kick_CMD(uid, args):
-    if not sam.admins.can(uid, 'kick_players'):
+def kick_CMD(userid, args):
+    if not sam.admins.is_allowed(userid, 'kick_players'):
         return
     if not args:
-        sam.home_page(uid)
-        sam.handle_choice(1, uid)
-        sam.handle_choice(1, uid)
+        sam.home_page(userid)
+        sam.handle_choice(1, userid)
+        sam.handle_choice(1, userid)
         return
     args = list(args)
     kicked = 0
     for arg in args:
-        target = sam.getuid(arg)
-        if es.exists('userid', target) and sam.admins.immunity_check(uid, target):
+        target = sam.get_userid(arg)
+        if es.exists('userid', target) and sam.admins.compare_immunity(userid, target):
             penalty.kick(target)
             kicked += 1
-            sam.msg.tell('Warning: %s of the target players were not found (%s)' % (len(args), ', '.join(args)))
+            sam.msg.tell('Warning: %s of the target players were not found (%s)' %
+                         (len(args), ', '.join(args)))
 
 
 def is_alive(target):
     return int(es.getplayerprop(target, lifestate)) in (512, 0)
 
 
-def cache_player(uid):
-    effects[uid] = PlayerEffects(uid)
+def cache_player(userid):
+    effects[userid] = PlayerEffects(userid)
 
 
 def msg(text, notify=True):
@@ -397,17 +398,18 @@ def msg(text, notify=True):
         sam.msg.tell('#all', text)
 
 
-def _blind_loop(uid):
+def _blind_loop(userid):
     try:
-        usermsg.fade(uid, 2, 1, 70, 0, 0, 0)
-        sam.delay_task(.01, 'blind_%s' % uid, _blind_loop, uid)
+        usermsg.fade(userid, 2, 1, 70, 0, 0, 0)
+        sam.delay_task(.01, 'blind_%s' % userid, _blind_loop, userid)
     except AttributeError:
         return
 
 
 def _drugs_loop(target):
     usermsg.shake(target, rint(20, 25), 1)
-    usermsg.fade(target, 2, 1, 100, rint(0, 255), rint(0, 255), rint(0, 255), rint(100, 125))
+    usermsg.fade(target, 2, 1, 100, rint(0, 255), rint(0, 255),
+                 rint(0, 255), rint(100, 125))
     try:
         target.setColorint(rint(0, 255), rint(0, 255), rint(0, 255), rint(175, 255))
     except AttributeError:

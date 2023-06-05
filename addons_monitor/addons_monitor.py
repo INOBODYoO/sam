@@ -27,7 +27,7 @@ def unload():
 
 
 def module_menu(uid, send=True):
-    if not sam.admins.can(uid, 'addons_monitor'):
+    if not sam.admins.is_allowed(uid, 'addons_monitor'):
         sam.home_page(uid)
         return
     page = sam.Menu('addons_monitor', addons_monitor_HANDLE, 'home_page')
@@ -37,7 +37,7 @@ def module_menu(uid, send=True):
         text = addon.name + ' '
         if addon.state:
             text = text + '[running]'
-        page.add_option(name, text, addon.locked and not sam.admins.can(uid, 'super_admin'))
+        page.add_option(name, text, addon.locked and not sam.admins.is_allowed(uid, 'super_admin'))
     page.footer('Locked Addons can only be',
                 'accessed by Super Admins')
     if send:
@@ -55,7 +55,7 @@ def addons_monitor_HANDLE(uid, choice, prev_page):
     page.add_line('Toggle Addon State:')
     page.add_option((choice, 'state', prev_page),
                 '[enabled] |  disabled' if addon.state else 'enabled  | [disabled]')
-    if sam.admins.can(uid, 'super_admin'):
+    if sam.admins.is_allowed(uid, 'super_admin'):
         page.add_line('Toggle Lock State:')
         page.add_option((choice, 'locked', prev_page),
                     '[locked] |  unlocked' if addon.locked else 'locked   | [unlocked]')

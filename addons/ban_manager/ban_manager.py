@@ -54,7 +54,7 @@ def unload():
 
 
 def addon_menu(uid, args=None):
-    if not sam.admins.can(uid, 'ban_level'):
+    if not sam.admins.is_allowed(uid, 'ban_level'):
         sam.msg.hud(uid, 'You don\'t have permission to use Ban Manager')
         sam.home_page(uid)
         return
@@ -83,12 +83,12 @@ def ban_manager_HANDLE(uid, choice, submenu):
             # - player is currently banned
             # - player is the user of the page
             # - player is also an Admin with higher immunity level
-            if sam.admins.can(user.steamid, 'super_admin') \
+            if sam.admins.is_allowed(user.steamid, 'super_admin') \
                     or is_banned(user.steamid) \
                     or not sam.admins.immunity_check(uid, user.steamid) \
-                    or user.steamid == sam.getsid(uid):
+                    or user.steamid == sam.get_steamid(uid):
                 continue
-            if sam.getuid(user.steamid):
+            if sam.get_userid(user.steamid):
                 active.append(user)
             else:
                 inactive.append(user)
@@ -142,7 +142,7 @@ def ban_profile(uid, info, submenu=False):
                                    else info['length_text']),
                   'ADMIN: ' + info['admin'],
                   'REASON:\n - ' + info['reason'])
-    can = sam.admins.can(uid, 'ban_level')
+    can = sam.admins.is_allowed(uid, 'ban_level')
     menu.separator()
     menu.add_option(info, 'Unban Player', can != 3)
     if can != 3:
@@ -164,7 +164,7 @@ def player_list_HANDLE(uid, choice, submenu):
     menu = sam.Menu('bm_ban_length', ban_length_HANDLE, submenu)
     menu.title('Ban Manager')
     menu.description('Choose ban length:')
-    lvl = sam.admins.can(uid, 'ban_level')
+    lvl = sam.admins.is_allowed(uid, 'ban_level')
     if lvl == 3:
         menu.add_option([choice, 'Permanent', 0.0], 'Permanent')
     for num in lengths.keys():
@@ -313,6 +313,6 @@ def _save_data():
 
 # Game Events
 def player_activate(ev):
-    sid = sam.getsid(int(ev['userid']))
+    sid = sam.get_steamid(int(ev['userid']))
     if is_banned(sid):
         kick(sid, False)

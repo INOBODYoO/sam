@@ -11,7 +11,7 @@ NEXTLEVEL = 'none'
 
 
 def addon_page(uid):
-    if not sam.admins.can(uid, 'map_manager'):
+    if not sam.admins.is_allowed(uid, 'map_manager'):
         sam.home_page(uid)
         return
     p = sam.Menu('map_manager', map_manager_HANDLE, 'home_page')

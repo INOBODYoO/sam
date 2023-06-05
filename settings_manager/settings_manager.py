@@ -11,7 +11,7 @@ ADDONS = 'Addons Settings'
 
 
 def module_menu(uid):
-    if not sam.admins.can(uid, 'settings_manager'):
+    if not sam.admins.is_allowed(uid, 'settings_manager'):
         sam.home_page(uid)
         return
     menu = sam.Menu('settings_manager', settings_manager_HANDLE, 'home_page')

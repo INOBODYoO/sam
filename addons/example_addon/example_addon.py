@@ -48,7 +48,7 @@ def example_addon_HANDLE(uid, choice, submenu):
     # Note: The menu isn't rebuilt, this means if the menu had info that can change in real-time,
     #       the menu will be sent exactly as it was. An example to rebuild the menu was to just
     #       call the previous menu function, say in this case:
-#   addon_menu(uid)
+#   addon_menu(userid)
     submenu.send(uid)
 
     # Will showcase all the available chat colors in one single chat message

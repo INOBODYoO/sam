@@ -45,7 +45,7 @@ def unload():
 
 
 def addon_menu(uid, args=None):
-    if not sam.admins.can(uid, 'bots_manager'):
+    if not sam.admins.is_allowed(uid, 'bots_manager'):
         sam.home_page(uid)
         return
     menu = sam.Menu('bots_manager', bots_manager_HANDLE, 'home_page')
