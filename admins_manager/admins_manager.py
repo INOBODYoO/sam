@@ -46,8 +46,9 @@ def admins_manager_HANDLE(userid, choice, submenu):
     # Instead, we can directly execute the required code and skip the rest of the code.
     if choice == 4:
         # Register a chat filter to get the name of the new group
-        f = sam.chat_filter.register('admin_group_creation', userid)
+        f = sam.chat_filter.register('admin_group_creation')
         f.function = admin_group_creation_FILTER
+        f.users.append(userid)
         f.cancel_option = module_menu
         f.cancel_args = ('userid',)
         f.instructions_page('Type in the chat name of the new group',
@@ -189,6 +190,9 @@ def profile_editor(userid, object, submenu):
         ])
     # If target is a Group:
     else:
+        
+        print(target)
+        
         menu.description('* GROUP NAME: ' + target.name)
         menu.add_options([
             ((object, 'members'),
@@ -268,8 +272,9 @@ def profile_editor_HANDLE(userid, choice, submenu):
                 target.super_admin = not target.super_admin
         elif key == 'rename':
             sam.cache.temp[userid] = object
-            f = sam.chat_filter.register('rename_admin_group', userid)
+            f = sam.chat_filter.register('rename_admin_group')
             f.function = rename_admin_group_FILTER
+            f.users.append(userid)
             f.cancel_option = module_menu
             f.cancel_args = ('userid',)
             f.instructions_page('Type in the chat name of the group',
@@ -448,8 +453,9 @@ def first_admin_setup_HANDLE(userid, choice, submenu):
     # If the user chooses to proceed, then start the RCON verification process
     if choice == 1:
         # Register a chat filter to get the name of the new group
-        f = sam.chat_filter.register('rcon_verification', userid)
+        f = sam.chat_filter.register('rcon_verification')
         f.function = rcon_verification_FILTER
+        f.users.append(userid)
         f.cancel_option = True
         f.instructions_page('In order to proceed, SAM needs to verify that you are',
                             'the server owner/operator.',
@@ -459,10 +465,6 @@ def first_admin_setup_HANDLE(userid, choice, submenu):
 # Chat Filters
 def rcon_verification_FILTER(userid, text, teamchat):
     """ Handles the RCON verification chat filter """
-
-
-    print(1)
-
     # Check if the user entered the correct RCON password
     if text == es.ServerVar('rcon_password'):
         # Create the Admin object

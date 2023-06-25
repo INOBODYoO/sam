@@ -3,82 +3,117 @@ import psyco
 
 psyco.full()
 
-# Global Variables
 sam = es.import_addon('sam')
+monitor = sam.addons_monitor
 
 
 def load():
-    # Initiate Addons
+    
+    # Load Addons
     sam.msg.console('* Loading Addons:')
-    for addon, data in sam.addons_monitor.addons.items():
-        if data.state:
-            sam.msg.console('   - Loaded %s' % data.name)
-            es.load('sam/addons/' + data.basename)
+    for addon in monitor.addons.values():
+        if addon.state:
+            sam.msg.console('   - Loaded %s' % addon.name)
+            es.load('sam/addons/' + addon.basename)
 
 
 def unload():
-    # Unload Addons & save Addons Monitor database
+    
+    # Unload Addons
     sam.msg.console('* Unloading Addons:')
-    for addon, data in sam.addons_monitor.addons.items():
-        if data.state:
-            es.unload('sam/addons/' + data.basename)
-            sam.msg.console('   - Unloaded %s' % data.name)
-    sam.addons_monitor.save_database()
-
-
-def module_menu(uid, send=True):
-    if not sam.admins.is_allowed(uid, 'addons_monitor'):
-        sam.home_page(uid)
-        return
-    page = sam.Menu('addons_monitor', addons_monitor_HANDLE, 'home_page')
-    page.title('Addons Monitor')
-    for name in sorted(sam.addons_monitor.addons.keys()):
-        addon = sam.addons_monitor(name)
-        text = addon.name + ' '
+    for addon in monitor.addons.values():
         if addon.state:
-            text = text + '[running]'
-        page.add_option(name, text, addon.locked and not sam.admins.is_allowed(uid, 'super_admin'))
-    page.footer('Locked Addons can only be',
-                'accessed by Super Admins')
-    if send:
-        page.send(uid)
+            es.unload('sam/addons/' + addon.basename)
+            sam.msg.console('   - Unloaded %s' % addon.name)
+            
+    # Save the database
+    monitor.save_database()
 
 
-def addons_monitor_HANDLE(uid, choice, prev_page):
+def module_menu(userid):
+    
+    # Check if the user is allowed to use this module
+    if not sam.admins.is_allowed(userid, 'addons_monitor'):
+        sam.home_menu(userid)
+        return
+
+    menu = sam.Menu('addons_monitor', addons_monitor_HANDLE, 'home_page')
+    menu.title('Addons Monitor')
+    menu.description('Select an Addon to open its monitor:')
+
+    # Add each addon as an option, with its state and lock state
+    for addon in sorted(monitor.addons.values(), key=lambda x: x.name):
+        state = '[running]' if addon.state else ''
+        locked = '[locked]' if addon.locked else ''
+        menu.add_option(addon.basename, addon.name + ' ' + state + locked)
+
+    menu.footer('Locked Addons can be accessed only by Super Admins')
+    menu.send(userid)
+
+
+def addons_monitor_HANDLE(userid, choice, submenu):
+    
+    menu = sam.Menu('monitor', monitor_HANDLE, submenu)
+    menu.title('Addons Monitor')
+    
+    # Get the addon object
     addon = sam.addons_monitor(choice)
-    page = sam.Menu('monitor', monitor_HANDLE, prev_page)
-    page.title('Addons Monitor')
-    page.description(' - NAME: ' + addon.name,
+    
+    # Add the addon's information as a description
+    menu.description(' - NAME: ' + addon.name,
                      ' - VERSION: %s' % addon.version,
                      ' - DESCRIPTION:\n' +
                      '\n'.join(addon.description) if addon.description else '')
-    page.add_line('Toggle Addon State:')
-    page.add_option((choice, 'state', prev_page),
-                '[enabled] |  disabled' if addon.state else 'enabled  | [disabled]')
-    if sam.admins.is_allowed(uid, 'super_admin'):
-        page.add_line('Toggle Lock State:')
-        page.add_option((choice, 'locked', prev_page),
-                    '[locked] |  unlocked' if addon.locked else 'locked   | [unlocked]')
-    if choice in sam.settings.default['Addons Settings']:
-        page.separator()
-        page.add_option((choice, 'settings_help', prev_page), 'Settings Help Window')
-    page.send(uid)
+    
+    # Add the option to toggle the Addon state
+    menu.add_line('Toggle Addon State:')
+    menu.add_option((choice, 'state'),
+                    '[enabled] |  disabled' if addon.state else 'enabled  | [disabled]')
+
+    # Add the option to toggle the Addon lock state, if the user is a super admin
+    if sam.admins.is_super_admin(userid):
+        menu.add_line('Toggle Lock State:')
+        menu.add_option(
+            (choice, 'locked'),
+            '[locked] |  unlocked' if addon.locked else 'locked  | [unlocked]'
+        )
+    
+    # Add the option to view the Addon's settings
+    if choice in sam.settings.settings['Addons Settings']:
+        menu.separator()
+        menu.add_option((choice, 'settings'), 'Settings Help Window')
+        
+    # Send the menu
+    menu.send(userid)
 
 
-def monitor_HANDLE(uid, choice, prev_page):
-    addon, key, previous = choice
-    if key == 'settings_help':
-        sam.settings.info_window(uid, addon)
-    else:
-        if key == 'state':
-            if sam.addons_monitor(addon).state:
-                es.unload('sam/addons/' + addon)
-                if addon in sam.HOME_PAGE_ADDONS:
-                    sam.HOME_PAGE_ADDONS.remove(addon)
-            else:
-                es.load('sam/addons/' + addon)
-        sam.addons_monitor.addons[addon].__dict__[key] = \
-            not sam.addons_monitor.addons[addon].__dict__[key]
-    sam.home_page(uid)
-    sam.handle_choice(3, uid)
-    addons_monitor_HANDLE(uid, addon, previous)
+def monitor_HANDLE(userid, choice, submenu):
+    
+    addon, key = choice
+
+    # If key is settigns, send the Addon's settings help window
+    if key == 'settings':
+        sam.settings.help_window(userid, addon)
+        submenu.send(userid)
+        return
+
+    # Get the addon object
+    addon = sam.addons_monitor.addons[addon]
+    
+    # Load/Unload the addon if the key is the Addon's state
+    if key == 'state':
+        if addon.state:
+            es.unload('sam/addons/' + addon.basename)
+            if addon.basename in sam.HOME_PAGE_ADDONS:
+                sam.HOME_PAGE_ADDONS.remove(addon)
+            sam.msg.console('Unloaded ' + addon.name, 'Addons Monitor')
+        else:
+            es.load('sam/addons/' + addon.basename)
+            sam.msg.console('Loaded ' + addon.name, 'Addons Monitor')
+            
+    # Toggle the key value
+    addon.__dict__[key] = not addon.__dict__[key]
+    
+    sam.home_page(userid)
+    module_menu(userid)
+    addons_monitor_HANDLE(userid, addon.basename, 'addons_monitor')

@@ -5,6 +5,7 @@ from datetime import datetime
 import os
 import random
 import time
+import re
 
 # EventScripts Imports
 import cmdlib
@@ -36,7 +37,7 @@ plugin.developer_mode = 1
 # 2.1 = Menus cache report (Prints all menus cache to console)
 # 3 = Sandbox Mode (Anyone can access anything in the menu
 #     even if not a Super or Regular Admin)
-# 4 = Prints all settings updates to console '''
+# 4 = Prints all settings updates to console """""f debug(lvl, *message):
 def debug(lvl, *message):
     if lvl == plugin.developer_mode:
         for line in message:
@@ -56,29 +57,37 @@ print('[SAM]   - Initializing Core Systems')
 
 
 class _Cache:
-    def __init__(self):
-        self.menus = {}
-        self.users_active_menu = {}
-        self.users_previous_menu = {}
-        self.sounds = {}
-        self.temp = {}
+    menus = {}
+    users_active_menu = {}
+    users_previous_menu = {}
+    sounds = {}
+    temp = {}
 
 
 cache = _Cache()
 
 
 class _Path:
-    def __init__(self):
-        self.core = es.getAddonPath('sam')
-        self.addons = self.core + '/addons/'
-        self.sounds = 'cstrike/sound/sam_sounds/'
-        self.settings = self.core + '/required/settings.json'
-        self.databases = self.core + '/required/databases/'
-        self.info_window_file = self.core + '/required/info_window (ignore this file).txt'
-
+    core = es.getAddonPath('sam').replace('/', '\\')
+    addons = core + '\\addons\\'
+    sounds = 'cstrike\\sound\\sam_sounds\\'
+    settings = core + '\\required\\settings.json'
+    databases = core + '\\required\\databases\\'
+    help_window_file = core + '\\required\\help_window (ignore this file).'
 
 path = _Path()
 
+class DynamicAttributes(object):
+    """ Dynamic Attributes Class """
+    
+    def __init__(self, obj):
+        self.__dict__.update(obj.copy())
+
+    def __getattr__(self, attr):
+        return self.__dict__[attr]
+
+    def __setattr__(self, attr, value):
+        self.__dict__[attr] = value
 
 class _DatabaseSystem:
     # Create directories
@@ -115,51 +124,62 @@ databases = _DatabaseSystem()
 
 
 class _SettingsSystem:
+    """ Settings System
+        Handles all settings related functions, configurations, and database
+    """
 
     def __init__(self):
-        self.gen = 'General Settings'
-        self.add = 'Addons Settings'
-        self.default = {
-            'General Settings': {
-                'chat_prefix': {
-                    'desc': ['Prefix in the beginning of every chat message',
-                             '(Can be color coded, take default as an example)'],
-                    'default': '#redSAM',
-                },
-                'anti_spam_chat_messages': {
-                    'desc': ['Repetitive messages sent by SAM will be blocked for a few',
-                             'seconds to avoid spamming the chat'],
-                    'default': True,
-                },
-                'enable_!rcon_command': {
-                    'desc': [
-                        'Enables !rcon command. (Requires "Rcon Command" permission)',
-                        'Allow Admins to execute almost any kind of server',
-                        'commands/variables through the game chat'
-                    ],
-                    'default': True,
-                },
-                'enable_!admins_command': {
-                    'desc': ['Opens a page with a list of all Admins currently online'],
-                    'default': True,
-                },
-                'enable_menus_clock': {
-                    'desc': [
-                        'Displays a clock in the top right corner of all pages.',
-                        '(Local time, which is the time from where the server is hosted)'
-                    ],
-                    'default': True,
-                },
-                'pages_separator_line_length': {
-                    'desc': ['The Length of pages separator lines (Max is 40)'],
-                    'default': 40,
-                },
+        self.settings = {}
+        self.default_settings = {
+            'chat_prefix': {
+                'description': [
+                    'Prefix displayed at the beginning of every chat message.',
+                    'Can include color coding. Example: #redSAM',
+                ],
+                'current_value': '#redSAM',
             },
-            'Addons Settings': {},
+            'anti_spam_chat_messages': {
+                'description': [
+                    'Enables blocking of repetitive messages sent by SAM',
+                    'for a few seconds to prevent chat spamming.',
+                ],
+                'current_value': True,
+            },
+            'enable_!rcon_command': {
+                'description': [
+                    'Enables the !rcon command, allowing admins with' + \
+                        ' the "Rcon Command" permission',
+                    'to execute a wide range of server commands and ' + \
+                        'variables through the in-game chat.',
+                ],
+                'current_value': True,
+            },
+            'enable_!admins_command': {
+                'description': [
+                    'Enables the !admins command, which opens a page displaying a list',
+                    'of all admins currently online.',
+                ],
+                'current_value': True,
+            },
+            'enable_menus_clock': {
+                'description': [
+                    'Displays a clock in the top right corner of all pages.',
+                    'The displayed time is based on the local time of the server host.',
+                ],
+                'current_value': True,
+            },
+            'menus_separator_line_length': {
+                'description': [
+                    'Specifies the length of the separator lines used in ' + \
+                        'menus and pages.',
+                    'The maximum allowed value is 40.',
+                ],
+                'current_value': 40,
+            }
         }
-
-        # Create database
-        self.save_database(self._load())
+        
+        # Update the settings database
+        self.update_settings()
 
     def __repr__(self):
         return str(self.__call__())
@@ -168,189 +188,204 @@ class _SettingsSystem:
         return self.__repr__()
 
     def __call__(self, arg=None):
-        config = self._load()
+        
+        # First and foremost, update the settings database
+        self.update_settings()
+        
+        general = 'General Settings'
+        addons = 'Addons Settings'
+        settings = self.settings
 
-        class Config(object):
-            def __init__(self, obj):
-                self.__dict__.update(obj.copy())
-
-            def __getattr__(self, attr):
-                return self.__dict__[attr]
-
+        # If theres no argument, return the general settings
         if arg is None:
-            return Config(config[self.gen])
-        elif arg in config.keys():
-            return config[arg]
-        elif arg in config[self.gen].keys():
-            return config[self.gen][arg]
-        elif arg in config[self.add].keys():
-            return Config(config[self.add][arg])
+            return DynamicAttributes(settings[general])
 
-    def _load(self):
-        data = databases.load(path.settings, True)
-        if not data:
-            data['Addons Settings'] = {}
-            data[self.gen] = dict([(k, v['default'])
-                                   for k, v in self.default[self.gen].items()])
-        default = self.default[self.gen]
-        config = data[self.gen]
-        if config == default:
-            return data
-        for cmd in default.keys():
-            if cmd not in config.keys():
-                config[cmd] = default[cmd]['default']
-        return data
+        # If the argument is one of the categories, return the category settings
+        elif arg in settings.keys():
+            return settings[arg]
 
-    @staticmethod
-    def save_database(data):
-        databases.save(path.settings, data, True)
+        # If the argument is one of the general settings, return the setting value
+        elif arg in settings[general].keys():
+            return settings[general][arg]['current_value']
+
+        # If the argument is one of the addons, return the addon settings
+        elif arg in settings[addons].keys():
+            return DynamicAttributes(settings[addons][arg])
+
+    def save_database(self):
+        """ Function to save the settings database """
+
+        databases.save(path.settings, self.settings, bypass=True)
+
+    def update_settings(self):
+        """ Fetches the database file and updates the settings """
+        
+        general = 'General Settings'
+        database = databases.load(path.settings, bypass=True)
+        
+        # If the database is empty, then set the default settings
+        if self.default_settings:
+            # Add general settings category
+            self.settings.setdefault(general, {})
+            general_settings = self.settings[general]
+
+            # Remove old settings
+            for key in general_settings.keys():
+                if key not in self.default_settings.keys():
+                    del general_settings[key]
+
+            # Update general settings
+            for key, value in self.default_settings.items():
+                if key not in general_settings.keys():
+                    general_settings[key] = value
+                # Update setting description
+                elif value['description'] != general_settings[key]['description']:
+                    general_settings[key]['description'] = value['description']
+                    
+            # Update addons settings
+            self.settings.setdefault('Addons Settings', {})
+            
+            # Clear the default settings from memory
+            self.default_settings = None
+        
+        # If the database is not empty, then update the settings   
+        elif database != self.settings:
+            self.settings.update(database)
+
+        # Save database
+        self.save_database()
 
     def addon_config(self, addon, config):
-        data = self._load()
-        if addon not in data[self.add].keys():
-            data[self.add][addon] = dict([(k, v['default']) for k, v in config.items()])
-        else:
-            self.default[self.add][addon] = config.copy()
-            for k, v in config.items():
-                if k not in data[self.add][addon].keys():
-                    data[self.add][addon][k] = v['default']
-        self.save_database(data)
+        """ Allows addons to create and update their own settings """
 
-    def info_window(self, userid, key):
-        data = self._load()
-        if key == self.gen:
-            data = data[self.gen].copy()
-            obj = self.default[key].copy()
-        elif key in self.default[self.add].keys():
-            data = data[self.add][key].copy()
-            obj = self.default[self.add][key].copy()
-        else:
-            msg.hud(userid, 'Error: Could not retrieve %s settings.' % title(key))
+        addons = 'Addons Settings'
+
+        # Update addon settings
+        if addons not in self.settings.keys():
+            self.settings.setdefault(addons, {})
+        self.settings[addons].setdefault(addon, {}) 
+        addon_settings = self.settings[addons][addon]
+
+        # Remove old settings
+        for key in addon_settings.keys():
+            if key not in config.keys():
+                del addon_settings[key]
+
+        # Update addon settings
+        for key, value in config.items():
+            if key not in addon_settings.keys():
+                addon_settings[key] = value
+            elif value['description'] != addon_settings[key]['description']:
+                addon_settings[key]['description'] = value['description']
+
+        # Save database
+        self.save_database()
+
+    def help_window(self, userid, section):
+        """ Function to display a help window for the user to consult the given section's
+            settings desciptions and current values for a given section """
+        
+        # Get the settings settings
+        settings = self.__call__(section) if section == 'General Settings' \
+            else self.settings['Addons Settings'][section]
+        
+        # If the section is not valid, then return
+        if not settings:
+            sam.msg.hud(userid, 'Invalid settings section name: %s' % section)
             return
-        lines = []
-        for k, v in obj.items():
-            lines.extend(('[ %s ]' % title(k),
-                          '- Description:\n%s' % '\n'.join(v['desc']),
-                          '- Default Value: %s' % v['default'],
-                          '- Current Value: %s\n' % data[k]))
-        msg.info(userid,
-                 key if key == self.gen else title(key) + ' | Settings Help Page',
-                 *lines)
+
+        titled = title(section)
+        seperator = '-' * 34
+        
+        # Add the settings help window disclaimer
+        lines = [
+            seperator,
+            'This window is intended for consulting the descriptions and',
+            'current values of each setting, and cannot be modified.',
+            'To modify these settings, you can use the menu or manually update',
+            'the settings file located at:',
+            path.settings,
+            seperator + '\n \n'
+        ]
+
+        # For each setting add its title, description, and current value
+        for setting, data in settings.items():
+            lines.extend([
+                seperator,
+                '[%s]' % setting.upper(),
+                seperator,
+                'CURRENT VALUE: %s' % data['current_value'],
+                'DESCRIPTION:',
+                '\n'.join(data['description']),
+                ' '
+            ])
+
+        # Display the help window
+        msg.info(userid, titled, *lines)
 
 
 settings = _SettingsSystem()
 
-
 class _ChatFilterSystem:
-    """ Chat Filter System
-
-        Chat Filters are the main way to control the chat messages sent in the server, and
-        also the only way to retrieve any kind of text input from the server's players.
-
-        Instead of creating multiple filters, SAM will create a single main filter
-        which will then check which filter keys are active, and execute their functions
-        tunneling the valid users to them. The main filter is only active as long as
-        there is at least one filter key registered, this is to avoid unnecessary
-        looping through the chat messages and memory usage.
+    """ Class to manage chat filters
+        Instead of creating multiple chat filters, this class has a main filter listener
+        that will check all registered filters and execute their functions accordingly.
     """
 
-    MAIN_FILTER_ACTIVE = False
-
     def __init__(self):
-        self.registered = {}
+        self.filters = {}
+        self.main_filter_status = False
 
-    def register(self, filter_id, users):
-        """ Registers a new chat filter """
+    def register(self, filter_id):
+        """ Register a new chat filter """
 
-        # Check if the filter is already registered
-        if filter_id not in self.registered.keys():
-            self.registered[filter_id] = ChatFilter(filter_id, users)
-        else:
-            # If the filter is registered, add the users to the filter
-            for user in users:
-                if user not in self.registered[filter_id].users:
-                    self.registered[filter_id].users.append(user)
-        # Start the main filter if it's not active
-        if not self.MAIN_FILTER_ACTIVE:
+        if filter_id not in self.filters:
+            self.filters[filter_id] = _ChatFilter(filter_id)
+        if not self.main_filter_status:
             self._start_main_filter()
-        return self.registered[filter_id]
+        return self.filters[filter_id]
 
     def delete(self, filter_id):
-        """ Deletes a filter """
-
-        # Check if the filter exists
-        if filter_id in self.registered.keys():
-            del self.registered[filter_id]
-        # Check if the filter page is in memory
-        if filter_id in cache.menus.keys():
-            del cache.menus[filter_id]
-        # Check if the main filter is active, if so, stop it
-        if not len(self.registered.keys()):
+        """ Delete a chat filter. """
+        self.filters.pop(filter_id, None)
+        self.delete_menu(filter_id)
+        if not self.filters and self.main_filter_status:
             self._stop_main_filter()
 
     def remove_user(self, userid, filter_id):
-        """ Removes a user from the filter """
+        """ Remove a user from a chat filter """
 
-        # Check if the filter exists
-        if filter_id in self.registered.keys():
-            f = self.registered[filter_id]
-            # Check if the user is in the filter
-            if isinstance(f.users, list) and userid in f.users:
-                # Remove the user from the filter
-                f.users.remove(userid)
-                # Check if the filter has any users, if not, delete it
-                if not len(f.users) and f.delete_on_empty:
-                    self.delete(filter_id)
-        # Check if the user active menu is the filter menu, if so, close it
-        if userid in cache.users_active_menu.keys() \
-                and cache.users_active_menu[userid]['menu_id'] == filter_id:
-            handle_choice(10, userid, True)
+        if filter_id in self.filters.keys():
+            f = self.filters[filter_id]
+            if userid not in self._get_users(f.users):
+                return
+            f.users.remove(userid)
+            if not f.users and f.delete_on_empty:
+                self.delete(filter_id)
+            if user_active_menu(userid) == filter_id:
+                handle_choice(10, userid, True)
 
     def in_filter(self, userid):
-        """ Checks if the user is in any filter.
-            Also a list of all the filters the user is in.
-        """
+        """ Check if a user is in any active chat filter """
 
-        for filter_id, obj in self.registered.items():
+        for filter_id, obj in self.filters.items():
             if obj.temporary and isinstance(obj.users, list) and userid in obj.users:
                 return filter_id
-        else:
-            return False
+        return False
 
-    @staticmethod
-    def _main_chat_filter(userid, text, teamchat):
-        """ The Main filter listener
-
-            The main filter loops through all registered filters and checks if the userid
-            is in any of them, if so, it will send the user to the filter function.
+    def _main_chat_filter(self, userid, text, teamchat):
+        """ This is the main chat filter listener
+            Its only active when there's at least one chat filter registered.
         """
 
-        registered = chat_filter.registered.copy()
-        for filter_id in registered.keys():
-            f = registered[filter_id]
-            # If the filter is not temporary and the user is in a temporary filter
-            # continue to the next filter
-            if not f.temporary and chat_filter.in_filter(userid):
+        for f in self.filters.values():
+            if not f.temporary and self.in_filter(userid):
                 continue
-            elif isinstance(f.users, list):
-                # In case the user list is empty, delete the filter
-                if not f.users and f.delete_on_empty:
-                    chat_filter.delete(filter_id)
-                    continue
-                # Continue if the user is not in the filter
-                elif userid not in f.users:
-                    continue
-                chat_filter.remove_user(userid, filter_id)
-            # Otherwise, checks if the filter in a filter of players
-            elif f.users in FILTERS or f.users == '#admins':
-                # If the not part of the filter group, continue
-                if userid not in userid_list(f.users):
-                    continue
-            # Check if the user has the filter page open
-            if userid in cache.users_active_menu.keys() \
-                    and cache.users_active_menu[userid]['menu_id'] == filter_id:
-                handle_choice(10, userid, True)
-            # Prep the text, and check if the user is trying to cancel the filter
+            users = self._get_users(f.users)
+            if userid not in users:
+                continue
+            if f.temporary:
+                self.remove_user(userid, f.filter_id)
             text = text.strip('"')
             if f.cancel_option and text.lower() == '!cancel':
                 if callable(f.cancel_option):
@@ -359,52 +394,57 @@ class _ChatFilterSystem:
                         f.cancel_option(userid, *args[1:])
                     else:
                         f.cancel_option(*args)
-                msg.hud(userid,
-                        'Operation canceled!',
-                        '(Reason: User chose to cancel the operation)')
+                msg.hud(userid, 'Operation canceled!', tag='Chat Filter System')
+                return 0, 0, 0
             if f.function:
                 return f.function(userid, text, teamchat)
-            debug(1, 'Chat Filter System | %s filter is missing a function' % filter_id)
-        else:
-            return userid, text, teamchat
+            debug(1, 'Chat Filter System | %s filter is missing a function' % f.filter_id)
+        return userid, text, teamchat
+
+    def _get_users(self, user_list):
+        """ Get the set of valid user IDs from the given user list """
+        users = set()
+        for u in user_list:
+            if isinstance(u, int) and get_userid(u):
+                users.add(u)
+            elif u in FILTERS or u == '#admins':
+                users.update(userid_list(u))
+        return users
 
     def _start_main_filter(self):
-        """ Starts the main filter """
+        """ Start the main chat filter listener """
 
         es.addons.registerSayFilter(self._main_chat_filter)
-        self.MAIN_FILTER_ACTIVE = True
+        self.main_filter_status = True
         debug(1, 'Chat Filter System | Main filter started')
 
     def _stop_main_filter(self):
-        """ Stops the main filter """
+        """ Stop the main chat filter listener """
 
-        # Check if there are any filters registered
-        if len(self.registered) or not self.MAIN_FILTER_ACTIVE:
+        if self.filters or not self.main_filter_status:
             return
-        # Remove the main filter
         es.addons.unregisterSayFilter(self._main_chat_filter)
-        self.MAIN_FILTER_ACTIVE = False
+        self.main_filter_status = False
         debug(1, 'Chat Filter System | Main filter stopped')
 
-    def _delete_all_filters(self):
-        """ Deletes all active filters """
+    def delete_menu(self, filter_id):
+        """ Delete the menu associated with the given filter ID """
 
-        self.registered.clear()
+        if filter_id in cache.menus.keys():
+            del cache.menus[filter_id]
+
+    def _delete_all_filters(self):
+        """ Delete all chat filters """
+
+        self.filters.clear()
         debug(1, 'Chat Filter System | Terminated all filters')
         self._stop_main_filter()
-
 
 chat_filter = _ChatFilterSystem()
 
 
-class ChatFilter(object):
-    """ Chat Filter Class
-
-        This class is used to create a chat filter, holding the filter's necessary
-        properties and functions to call depending on the filter users outcome.
-    """
-
-    def __init__(self, filter_id, users):
+class _ChatFilter:
+    def __init__(self, filter_id):
         self.filter_id = filter_id
         self.function = False
         self.delete_on_empty = True
@@ -414,22 +454,13 @@ class ChatFilter(object):
         self.temporary = True
         self.users = []
 
-        # Sort users
-        if isinstance(users, list) or users in FILTERS or users == '#admins':
-            self.users = users
-        elif isinstance(users, int):
-            self.users.append(users)
-
     def instructions_page(self, *instructions):
-        """ Adds instructions to the filter page
-
-            - This page is meant to be a static page with a few instructions to
-            indicate to the user what to do while the filter is active, the page will
-            be closed once the user either cancels the operation or completes it.
-            - The filter function is the function which each valid user will be sent to,
-            to then proceed the operation designated for the filter
         """
+        Display the instructions page for the chat filter.
 
+        Args:
+            *instructions: Variable number of instruction lines.
+        """
         self.instructions = instructions
         menu = Menu(self.filter_id, self.instructions_page_HANDLE)
         menu.header_text = False
@@ -440,26 +471,29 @@ class ChatFilter(object):
             menu.separator()
             menu.add_option(1, 'Cancel Operation')
         menu.separator()
-        menu.send(*self.users)
+        menu.send(chat_filter._get_users(self.users))
 
     def instructions_page_HANDLE(self, userid, choice, submenu):
-        """ Handles the instructions page choice """
+        """
+        Handle the choice made on the instructions page menu.
 
-        # If the user chooses to cancel the operation
+        Args:
+            userid (int): The ID of the user.
+            choice (int): The choice index.
+            submenu (bool): Indicates if it's a submenu choice.
+        """
         if choice == 1:
-            # Close the page on the user
             handle_choice(10, userid, True)
-            # Remove the user from the filter
             chat_filter.remove_user(userid, self.filter_id)
-            # Notify the user that the operation was cancelled
             msg.hud(userid, '%s | Operation Cancelled!' % title(self.filter_id))
-            # If the filter has a cancel function, execute it
             if callable(self.cancel_option):
                 args = self.cancel_args
                 if args[0] == 'userid':
                     self.cancel_option(userid, *args[1:])
                 else:
                     self.cancel_option(*args)
+
+
 
 
 class _MessageSystem:
@@ -472,25 +506,38 @@ class _MessageSystem:
 
     def __init__(self):
         self.spam_queue = []
-        self.colors = {'blue': '71ACDF',
-                       'green': '5CB85C',
-                       'orange': 'F0AD4E',
-                       'red': 'EF625D',
-                       'black': '292B2C',
-                       'white': 'FFFFFF',
-                       'pink': 'FFC0CB',
-                       'gray': 'A9A9A9',
-                       'purple': '931CE2',
-                       'yellow': 'FFFF00',
-                       'cyan': '00FFFF',
-                       't': 'FF3D3D',
-                       'ct': '9BCDFF',
-                       'spec': 'CDCDCD',
-                       'default': 'FFB300'}
+        self.colors = {
+            'blue': '0000FF',
+            'green': '00FF00',
+            'orange': 'FFA500',
+            'red': 'FF0000',
+            'black': '000000',
+            'white': 'FFFFFF',
+            'pink': 'FFC0CB',
+            'gray': '808080',
+            'purple': '800080',
+            'yellow': 'FFFF00',
+            'cyan': '00FFFF',
+            'gold': 'FFD700',
+            'silver': 'C0C0C0',
+            'brown': 'A52A2A',
+            'navy': '000080',
+            'teal': '008080',
+            'olive': '808000',
+            'magenta': 'FF00FF',
+            'lime': '00FF00',
+            'aqua': '00FFFF',
+            'maroon': '800000',
+            'coral': 'FF7F50',
+            'terro': 'FF3D3D',
+            'ct': '9BCDFF',
+            'spec': 'CDCDCD',
+            'default': 'FFB300'
+        }
 
     @staticmethod
-    def _sort_users(users):
-        """ Sorts the users list and returns it """
+    def sort_users(users):
+        """Returns a sorted list of user IDs based on the input"""
 
         if users == 'BOT':
             return users
@@ -498,18 +545,19 @@ class _MessageSystem:
             return userid_list('#admins')
         elif isinstance(users, int) or users in FILTERS:
             return users
-        new = []
+
+        sorted_users = []
         for x in users:
             if str(x).startswith('#'):
                 for userid in userid_list(x):
-                    if userid not in new:
-                        new.append(userid)
+                    if userid not in sorted_users:
+                        sorted_users.append(userid)
                 continue
             x = get_userid(x)
-            if x and x not in new:
-                new.append(x)
-            else: continue
-        return new
+            if x and x not in sorted_users:
+                sorted_users.append(x)
+
+        return sorted_users
 
     def _in_queue(self, text):
         """ Checks if the given text is in the spam queue """
@@ -530,55 +578,56 @@ class _MessageSystem:
 
             e.g: #red{prefix} | #green{tag} | #whiteHello World """
 
-        prefix = '#default%s #gray| ' % settings('chat_prefix') if prefix else '#default'
-        tag = '#green%s #gray| ' % tag if tag else ''
+        prefix = '#default%s #silver| ' % settings('chat_prefix') if prefix else '#default'
+        tag = '#green%s #silver| ' % tag if tag else ''
         text2 = '%s%s#white%s' % (prefix, tag, text)
         if self._in_queue(text):
             return
         if log and ('#all' in users or '#human' in users):
             self.console(text, tag)
-        usermsg.saytext2(self._sort_users(users), 0, '''%s''' % compile_text(text2))
+        usermsg.saytext2(self.sort_users(users), 0, format_text(text2))
 
     def hud(self, users, *text):
         """ A hudhint type message which appears
             in the bottom center of the player screen
         """
 
-        usermsg.hudhint(self._sort_users(users),
-                        compile_text('| SAM |\n' + '\n'.join(map(str, text)), True))
+        usermsg.hudhint(self.sort_users(users),
+                        format_text('| SAM |\n' + '\n'.join(map(str, text)), True))
 
     def center(self, users, text):
         """ A type message which appears in the center of the player screen """
 
-        usermsg.centermsg(self._sort_users(users), text)
+        usermsg.centermsg(self.sort_users(users), text)
 
     def side(self, users, *text):
         """ A type message which appears on the side of the player screen """
 
-        usermsg.keyhint(self._sort_users(users), compile_text('\n'.join(map(str, text)),
-                                                              remove_colors=True,
-                                                              remove_special=False))
+        usermsg.keyhint(self.sort_users(users),
+                        format_text('\n'.join(map(str, text)),
+                                     remove_colors=True,
+                                     remove_special=False))
 
     def vgui_panel(self, users, panel_name, visible, data={}):
         """ VGUI panel type message, to send VGUI panels to users """
 
-        usermsg.showVGUIPanel(self._sort_users(users), panel_name, visible, data)
+        usermsg.showVGUIPanel(self.sort_users(users), panel_name, visible, data)
 
     def motd(self, users, window_title, url_or_filepath, message_type=2):
         """ Message Of The Day type message, to send URL pages to
             users using the in-game MOTD window browser """
-        usermsg.motd(self._sort_users(users),
+        usermsg.motd(self.sort_users(users),
                      message_type,
                      'SAM | %s' % window_title,
                      url_or_filepath)
 
     def info(self, users, window_title, *lines):
         """ Info type message, to send text to users using the in-game info window """
-        with open(path.info_window_file, 'w') as f:
+        with open(path.help_window_file, 'w') as f:
             f.write('\n'.join(lines))
-        self.motd(self._sort_users(users),
+        self.motd(self.sort_users(users),
                   window_title,
-                  path.info_window_file.replace('\\', '/'), 3)
+                  path.help_window_file.replace('\\', '/'), 3)
 
     @staticmethod
     def console(text, tag=None):
@@ -587,7 +636,7 @@ class _MessageSystem:
 
             E.g. SAM | PLAYERS MANAGER | X was kicked from the server. """
 
-        print(compile_text('[%s][SAM] %s%s' %
+        print(format_text('[%s][SAM] %s%s' %
                            (get_time('%H:%M:%S'),
                             tag.upper() + ' | ' if tag else '', text), True))
 
@@ -613,9 +662,6 @@ class _AddonsMonitor:
         def __str__(self):
             return self.__repr__()
 
-        def __call__(self, key):
-            return self.__dict__[key]
-
     def __init__(self):
 
         # Init Addons dictionary instance
@@ -640,11 +686,13 @@ class _AddonsMonitor:
     def __str__(self):
         return self.__repr__()
 
-    def __call__(self, addon=None):
+    def __call__(self, addon):
+        
         return self.addons[addon] if addon in self.addons.keys() else None
 
     def _verify_installed_addons(self):
         """ Verify if all installed Addons are valid """
+    
         # Loop over all installed Addons
         installed = self.addons_dir_list()
 
@@ -676,6 +724,7 @@ class _AddonsMonitor:
 
     def save_database(self):
         """ Save Addons Monitor database """
+
         database = {}
         for addon in self.addons.keys():
             database[addon] = self.addons[addon].__dict__.copy()
@@ -730,7 +779,7 @@ class _AdminsSystem:
 
     def __call__(self, arg=None):
 
-        if not arg:
+        if arg is None:
             return None
         # Check if arg is a userid, if so then convert it to a SteamID
         if isinstance(arg, int):
@@ -745,8 +794,7 @@ class _AdminsSystem:
         elif arg == 'groups':
             return self.groups
         # If there's no argument at all, then return the Admins dict
-        elif not arg:
-            return self.admins
+        return self.admins
 
     def is_admin(self, user):
         """ Function to return whether a user is a valid Admin """
@@ -823,47 +871,48 @@ class _AdminsSystem:
 
     def compare_immunity(self, admin1, admin2):
         """ Compares the immunity level between two Admins and returns
-            whether the Admin1 has higher immunity than Admin2
+            whether Admin1 has higher immunity than Admin2
         """
 
         # If Developer mode is level 3, return True regardless
         if plugin.developer_mode == 3:
             return True
+
         # Admin1 is most likely a menu user, therefore, get his steamid
-        user = admin1
         admin1 = get_steamid(admin1)
-        # Return true if Admin2 is not an actual an Admin or is actually Admin1
+
+        # Return True if Admin2 is not an actual Admin or is actually Admin1
         if not self.is_admin(admin2) or admin1 == admin2:
             return True
+
         # Get both Admins objects
         admin1 = self.admins[admin1]
         admin2 = self.admins[admin2]
 
         # Check if Admin2 is a Super Admin
         if admin2.super_admin:
-            msg.hud(user, 'Action denied! %s is immune to you.' % admin2.name)
+            msg.hud(admin1, 'Action denied! %s is immune to you.' % admin2.name)
             return False
-        elif admin1.super_admin:
+
+        # Check if Admin1 is a Super Admin
+        if admin1.super_admin:
             return True
 
         # Function to get the immunity level of an Admin
-        # (If the Admin is in a group, the higher immunity level will be returned)
         def get_immunity(admin):
-            admin_imm = admin.immunity_level  # get the Admin own level
-            group_imm = 0  # leave group level 0 by default
-            # Replace the group level with the Admin Group level
-            # in case the Admin is in a group
-            if admin.group and admin.group in self.groups.keys():
-                group_imm = self.groups[admin.group].immunity_level
-            # Return the higher level
+            admin_imm = admin.immunity_level
+            group_imm = self.groups.get(admin.group, 0).immunity_level
             return max(admin_imm, group_imm)
 
         # Compare the immunity levels between the two Admins
         result = get_immunity(admin1) > get_immunity(admin2)
-        # Notify the Admin if he doesn't have permission
+
+        # Notify Admin1 if they don't have permission
         if not result:
-            msg.hud(user, 'Action denied! %s is immune to you.' % admin2.name)
+            msg.hud(admin1, 'Action denied! %s is immune to you.' % admin2.name)
+
         return result
+
 
     def new_admin(self, steamid, super_admin=False):
         """ Function to create a new Admin """
@@ -924,6 +973,21 @@ class _AdminsSystem:
             return []
         # Return the list of members
         return [admin.steamid for admin in self.admins.values() if admin.group == group]
+
+    def get_admin_group(self, user):
+        """ Function to get the group of an Admin """
+
+        steamid = get_steamid(get_userid(user))
+        # Check if the Admin exists
+        if not self.is_admin(steamid):
+            return False
+        group = self.admins[steamid].group
+        if not group:
+            return False
+        elif group not in self.groups.keys():
+            self.admins[steamid].group = False
+            return False
+        return self.groups[group]
 
     def save_database(self):
         """ Saves both Admins & Groups database at once """
@@ -994,7 +1058,6 @@ class _AdminsSystem:
         # Load the admins and groups databases
         admins_db = databases.load('admins_database')
         groups_db = databases.load('groups_database')
-
         # Convert the Admins database
         for steamid, data in admins_db.items():
             admin = Admin(steamid)
@@ -1023,10 +1086,8 @@ class Admin(object):
         self.ban_level = 0
         self.immunity_level = 0
         self.group = False
-        self.permissions = dict((x, False)
-                                for x in admins.admins_permissions)
-        self.addons_permissions = dict((x, False)
-                                       for x in admins.addons_permissions)
+        self.permissions = dict((x, False) for x in admins.admins_permissions)
+        self.addons_permissions = dict((x, False) for x in admins.addons_permissions)
 
     def toggle_permission(self, permission):
         """ Channels this class through the AdminSystem's internal
@@ -1045,10 +1106,8 @@ class Group(object):
         self.ban_level = 0
         self.immunity_level = 0
         self.color = 'default'
-        self.permissions = dict((x, False)
-                                for x in admins.admins_permissions)
-        self.addons_permissions = dict((x, False)
-                                       for x in admins.addons_permissions)
+        self.permissions = dict((x, False) for x in admins.admins_permissions)
+        self.addons_permissions = dict((x, False) for x in admins.addons_permissions)
 
         # Attach the group color to the name
         self._attach_color()
@@ -1348,7 +1407,7 @@ class Menu(object):
             # Display the menu to the user in-game
             es.showMenu(self.timeout,
                         userid,
-                        compile_text(display.encode('utf-8'),
+                        format_text(display.encode('utf-8'),
                                      remove_colors=True,
                                      remove_special=True,
                                      strip_text=False))
@@ -1456,7 +1515,7 @@ def load():
     # Make plugin version public
     es.setinfo('sam_version', plugin.version)
     es.makepublic('sam_version')
-    msg.tell('#all', 'Loaded', tag='#blue' + plugin.version)
+    msg.tell('#all', 'Loaded', tag='#cyan' + plugin.version)
 
 
 def unload():
@@ -1481,6 +1540,7 @@ def unload():
     # Save databases
     admins.save_database()
     addons_monitor.save_database()
+    settings.save_database()
     databases.save('players_data', players.data)
 
     # Unload main modules
@@ -1489,7 +1549,7 @@ def unload():
         es.unload('sam/' + module)
         msg.console('* Unloaded %s Module' % title(module))
 
-    msg.tell('#all', 'Unloaded', tag='#blue' + plugin.version)
+    msg.tell('#all', 'Unloaded', tag='#cyan' + plugin.version)
 
 
 # Home Page
@@ -1650,16 +1710,15 @@ def admins_CMD(userid, args):
 
 # Core Functions
 def get_userid(user):
-    """ Returns the userid of the given user """
+    """ Returns the userid of the given user. """
 
-    # Use es.getuserid() method for a faster approach
+    # Use es.getuserid() method for faster lookup
     userid = es.getuserid(user)
     if userid and es.exists('userid', userid):
         return userid
-    # Otherwise, if user is the new SteamID3 format, loop all players to see if any
-    # matches the given SteamID3
+    # Otherwise, if user is in the new SteamID3 format, loop all players to find a match
     for player in playerlib.getPlayerList('#all'):
-        if player.steamid == user:
+        if player.steamid == user or str(user).lower() in player.name.lower():
             return player.userid
     return None
 
@@ -1677,46 +1736,33 @@ def get_player(user):
 
 
 def player_list(*filters):
-    """ Returns a list of players (as their Player Object) from the server
-
-        A one or more filters can be given in order to return a compiled list of all
-        the filters together:
-        #all, #human, #bot, #dead, #alive, #un, #spec, #ct, #t, #admins
+    """ Returns a list of players (as their Player Object) from the
+        server based on given filters.
     """
+
+    all_players = playerlib.getPlayerList('#all')
     if not filters:
-        return playerlib.getPlayerList('#all')
-    elif len(filters) == 1:
+        return all_players
+    if len(filters) == 1:
         target = filters[0]
         if target == '#admins':
-            return [i for i in playerlib.getPlayerList() if admins.is_admin(i.steamid)]
+            return [i for i in all_players if admins.is_admin(i.steamid)]
         return playerlib.getPlayerList(target if target in FILTERS else '#all')
-    else:
-        targets = []
-        for f in filters:
-            if f in FILTERS:
-                targets.extend(playerlib.getPlayerList(f))
-        return targets
+    return [i for f in filters for i in playerlib.getPlayerList(f) if f in FILTERS]
 
 
 def userid_list(*filters):
-    """ Returns a list of all players userid from the server.
-        One or more filters can be given in order to return a compiled list
-        of all the filters together.
-    """
+    """Returns a list of user IDs from the server based on given filters."""
 
+    all_userid = playerlib.getUseridList('#all')
     if not filters:
-        return playerlib.getUseridList('#all')
-    elif len(filters) == 1:
+        return all_userid
+    if len(filters) == 1:
         target = filters[0]
         if target == '#admins':
-            return [i for i in playerlib.getUseridList('#all') if admins.is_admin(i)]
+            return [i for i in all_userid if admins.is_admin(i)]
         return playerlib.getUseridList(target if target in FILTERS else '#all')
-    else:
-        targets = []
-        for f in filters:
-            if f in FILTERS:
-                targets.extend(playerlib.getUseridList(f))
-        return targets
+    return [i for f in filters for i in playerlib.getUseridList(f) if f in FILTERS]
 
 
 def change_team(userid, team_id):
@@ -1792,57 +1838,49 @@ def title(text):
 
     return text.title().replace('_', ' ') if text else 'None'
 
+def format_text(text, remove_colors=False, remove_special=True, strip_text=True):
+    """ Formats the given text for usage in different contexts,
+        such as in-game chat or menus.
 
-def compile_text(text, remove_colors=False, remove_special=True, strip_text=True):
-    """ Compiles the given text making essential changes depending on where the text
-        will be used. (e.g. whether is to the in-game chat or in menus)
-
-        remove_colors: Removes all colors from the text, otherwise, color names will
-                       be replaced with their RGB color code
-        remove_special: Removes all special characters from the text
-        strip_text: Strips the text from any spaces at the start and end
+        remove_colors: If True, removes all color names from the text.
+                       If False, replaces color names with RGB codes.
+        remove_special: If True, removes all special characters from the text.
+        strip_text: If True, strips any leading or trailing spaces from the text.
     """
 
+    # Remove colors or replace with RGB code
     for color, code in msg.colors.items():
-        # Remove the color from the text
-        if remove_colors:
-            text = text.replace('#' + color, '')
-        # Replace the color with its RGB code
-        else:
-            text = text.replace('#' + color, '\x07' + code)
-    # Remove all special characters
+        text = text.replace('#' + color, '' if remove_colors else '\x07' + code)
+    # Remove special characters
     if remove_special:
-        # \n = New line
-        # \r = Carriage return
-        # \t = Tab
-        for i in ('\\n', '\\r', '\\t'):
-            text = text.replace(i, '')
-    # Strip the text from any spaces at the start and end
+        text = re.sub(r'\\[nrt]', '', text)
+    # Strip spaces at the start and end
     if strip_text:
-        text = text.strip()
+        text = text.lstrip().rstrip()
     return text
 
 
 def read_file(file_path, default=None, default_file=None):
-    """ Reads the given file and returns a list of lines """
-
+    """Reads the given file and returns a list of lines"""
+    
     if not os.path.isfile(file_path) and default_file:
-        write_file(default)
+        write_file(default_file, default)
+    
     lines = []
     with open(file_path, 'r') as f:
-        for line in f.readlines():
-            line = line.strip().replace('\n', '')
-            if not line.startswith('//') and not line.startswith(' ') and line != '':
+        for line in f:
+            line = line.rstrip('\n')
+            if line.strip() and not line.strip().startswith('//'):
                 lines.append(line)
+    
     return lines
 
 
 def write_file(file_path, lines):
-    """ Writes the given lines to the given file """
+    """Writes the given lines to the given file"""
 
-    if not os.path.isfile(file_path):
-        with open(file_path, 'w') as f:
-            f.write('\n'.join(lines))
+    with open(file_path, 'w') as f:
+        f.write('\n'.join(lines))
 
 
 def _decache_player(userid):
@@ -1855,7 +1893,7 @@ def _decache_player(userid):
     if userid in cache.users_active_menu.keys():
         del cache.users_active_menu[userid]
     # Decache the player from any active chat filters
-    for filter_id in chat_filter.registered.keys():
+    for filter_id in chat_filter.filters.keys():
         chat_filter.remove_user(userid, filter_id)
 
 
@@ -1883,6 +1921,15 @@ def send_menu(userid, menu_id, page=1):
         msg.console('Failed to send menu to %s. Menu with ID %s does not exist' %
                     (es.getplayername(userid), menu_id),
                     'Menu System')
+
+
+def user_active_menu(userid):
+    """ Returns whether the user has an active menu """
+
+    if userid in cache.users_active_menu.keys():
+        return cache.users_active_menu[userid]
+    else:
+        return None
 
 
 def _cancel_menu_refresh(users):

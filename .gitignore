@@ -8,3 +8,8 @@ required/
 *.name
 *.xml
 *.iml
+.vs/slnx.sqlite
+.vs/sam/FileContentIndex/24100dd2-1ce0-4d6d-9a02-3f5f628f52f9.vsidx
+.vs/sam/FileContentIndex/read.lock
+.vs/sam/v17/.wsuo
+sam.code-workspace

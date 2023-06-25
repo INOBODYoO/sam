@@ -12,19 +12,20 @@ OBJECTS = sam.databases.load(sam.path.addons + '/objects_spawner/objects.json', 
 SPAWNED = dict((int(k), v) for k, v in sam.databases.load('spawned_objects').items())
 CACHE = {'move_speed': {}, 'ui': []}
 LINE = '-' * 45
-COLORS = {'Blue': '0,0,255',
-          'Black': '0,0,0',
-          'Brown': '150,100,0',
-          'Dark Red': '125,0,0',
-          'Gray': '175,175,175',
-          'Light Green': '0,255,0',
-          'Orange': '255,150,0',
-          'Pink': '255,0,255',
-          'Purple': '175,0,175',
-          'Red': '255,0,0',
-          'Turkey': '0,255,255',
-          'Yellow': '255,255,0'}
-
+COLORS = {
+    'Blue': '0,0,255',
+    'Black': '0,0,0',
+    'Brown': '150,100,0',
+    'Dark Red': '125,0,0',
+    'Gray': '175,175,175',
+    'Light Green': '0,255,0',
+    'Orange': '255,150,0',
+    'Pink': '255,0,255',
+    'Purple': '175,0,175',
+    'Red': '255,0,0',
+    'Turkey': '0,255,255',
+    'Yellow': '255,255,0'
+}
 m_vecOrigin = 'CBaseEntity.m_vecOrigin'
 
 

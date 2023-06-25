@@ -5,7 +5,6 @@ psyco.full()
 
 sam = es.import_addon('sam')
 
-
 def player_activate(ev):
     sid = ev['es_steamid']
     ban_manager = sam.addons_monitor.import_addon('ban_manager')

@@ -25,7 +25,8 @@ reasons = [
     'Used Aim-bot cheating',
     'Abuse of Voice Chat (Loud noises, play music, etc)',
     'Intentional chat Spam',
-    'Intentional abuse of a known game/map bug']
+    'Intentional abuse of a known game/map bug'
+]
 lengths = {1: (('5 Minutes', 300),
                ('30 Minutes', 1800),
                ('1 Hour', 3600),

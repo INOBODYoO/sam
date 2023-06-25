@@ -1,68 +1,84 @@
+import os
 import es
 import psyco
 
 psyco.full()
 
 sam = es.import_addon('sam')
-file = sam.path.core + '/required/server_rules.txt'
-rules = ['// SAM - Server Rules',
-         '// ',
-         '// Each line below represents a server rule to be displayed in the !rules page:',
-         '// - To add/remove a rule, simply add/remove a line',
-         '// - When done editing the file simply save it,',
-         '//   its not necessary to reload the plugin, the file is read in real-time.\n',
-         'Do not disrespect other players or Admins',
-         'Do not spam the chat',
-         'Do not abuse of the voice chat (i.e: loud noises, playing music/sounds)',
-         'Do not abuse of a known game/map bug',
-         'Cheating is forbidden']
+rules_file = sam.path.core + '/required/server_rules.txt'
+default_file = [
+    "// SAM - Server Rules",
+    "//",
+    "// This file contains the server rules to be displayed on the !rules page:",
+    "//",
+    "// - To add or remove a rule, simply add or remove a line.",
+    "// - Changes made to this file are read in real-time and do\
+        not require reloading the plugin.",
+    " ",
+    "Do not disrespect other players or administrators.",
+    "Do not excessively spam the chat.",
+    "Do not abuse the voice chat by making loud noises or playing music/sounds.",
+    "Do not exploit any known game or map bugs.",
+    "Cheating is strictly forbidden."
+]
 
 sam.settings.addon_config('server_rules', {
     'display_on_player_activate': {
-        'desc': ['Sends the rules page as soon as the player connects the server'],
-        'default': False
+        'description': [
+            'Specifies if to send rules on player connect.'
+        ],
+        'current_value': False
     },
     'footer_message': {
-        'desc': ['Message to display in the bottom of the page',
-                 'Setting to false will disable the footer entirely.'],
-        'default': ['Disrespecting these rules may lead to',
-                    'a kick or even ban from the server.']
+        'description': [
+            'Message at the bottom of the rules page.',
+            'Set to False to disable the footer.'
+        ],
+        'current_value': [
+            'Disrespecting rules may result in kick or ban.'
+        ]
     }
 })
 
 
 def load():
+
     # Create file if not existent
-    sam.write_file(file, rules)
+    if not os.path.exists(rules_file):
+        sam.write_file(rules_file, default_file)
 
     # Create addon command
     sam.cmds.chat('rules', addon_menu)
 
 
 def unload():
+
+    # Delete the command
     sam.cmds.delete('rules')
 
 
 # Addon Page
-def addon_menu(uid, args=None):
-    menu = sam.Menu('server_rules', server_rules_HANDLE)
+def addon_menu(userid, args=None):
+    
+    menu = sam.Menu('server_rules')
     menu.header_text = False
     menu.title('Server Rules')
-    menu.add_multiple_options(sam.read_file(file, rules))
-    footer = sam.settings('server_rules').footer_message
-    try:
-        if footer:
-            menu.footer(*footer)
-    except:
-        pass
-    menu.send(uid)
+    
+    # Read the rules file, and add each rule as an enumerated option
+    menu.add_options(enumerate(sam.read_file(rules_file, rules)))
 
+    # Add the footer message
+    footer = sam.settings('server_rules').footer_message.get('current_value')
+    if footer:
+        menu.footer(*footer)
 
-def server_rules_HANDLE(uid, choice, submenu):
-    submenu.send(uid)
+    # Send the menu
+    menu.send(userid)
 
 
 # Game Events
 def player_activate(ev):
+    
+    # Display the rules on player connect
     if sam.settings('server_rules').display_on_player_activate:
         addon_menu(ev['userid'])

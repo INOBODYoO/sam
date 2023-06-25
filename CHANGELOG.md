@@ -2,80 +2,43 @@ _CHANGELOG_
 ===========
 **This document serves as a changelog for the ongoing development of the project. Updates and changes will be documented with their respective release dates.**
 
-[05-06-2023 Update Notes]
+[25-06-2023 Update Notes]
 =========================
 
-## Admins System and Module Changes:
+## Main Modules & Addons Changes:
 
 #### Added
 
-- Added `is_super_admin()` method to check if an admin is a super admin.
-- Added `get_group_members()` method to retrieve the members of a group.
-- Added `save_database()` method to save the database.
-- Added `new_admin()` method to create a new admin.
-- Added `delete_admin()` method to remove an admin.
-- Added `new_group()` method to create a new group.
-- Added `delete_group()` method to delete a group.
-- Added `register_addon_permission()` method for addons to register their own permissions.
-- Added Addons Permissions option in the Profile Editor for both Admins and Groups to toggle registered permissions.
-- Added Rename Group option, allowing group renaming using a chat filter.
+- **[Core Module]:** Added user_active_menu() which returns the active menu of the user if any, else returns None.
+- **[Core Module]:** Added get_admin_group() to quickly get the admin group class object.
+- **[Settings System]:** Added comments and documentation to the systems functions.
+- **[Addons Monitor]:** Added comments and documentation to the systems functions.
 
 #### Changed
 
-- Renamed some of the system's class methods to provide more descriptive names reflecting their purposes.
-- Improved the efficiency and accuracy of the `compare_immunity()` and `is_allowed()` methods for permission and immunity checks.
-- Re-wrote the `list()` method, which now returns a copy of the Admins dictionary data by default.
-  - Additional arguments can be used with `list()` method:
-    - `'super_admin'`: to retrieve only Super Admins.
-    - `'groups'`: to retrieve only groups.
-    - `'online'`: to retrieve only online admins.
-    - With these changes, `items()` method has been removed
-- Enhanced the Admins Online counter on the module main page, displaying the number of Super Admins and regular Admins.
-- Removing an Admin will now close their active menus and notify them if they are online.
-- Improved the editing process of a Group's member list. Members of the group being edited are marked with an 'X', admins without a group are not marked, and admins in other groups are labeled with their respective group name.
-- Adapted the First Admin Setup to work with the new Chat Filter System, also improved the whole process.
-
-## Chat Filter System Changes:
-
-#### Added
-
-- Added `instructions_page(*instructions)`, which creates a menu with the provided instructions. The menu will remain open as long as the filter is active, or the user cancels the operation.
-- Added a better cancel option to the ChatFilter class, which the user can always type !cancel in the chat, or if open, choose the cancel option from the instructions menu.
-  - Its also possible to attach a function to the cancel option, which will be executed when the user cancels the operation.
-
-#### Changed
-
-- SAM no longer creates a new chat filter, using es.addons.registerSayFilter, for each filter. Instead, it creates a single filter (the Main Filter) to handle all registered filter Keys.
-  - The Main Filter is only active when there are registered filter Keys, and is disabled when there are no registered filter Keys. This is done to reduce the number of filters created by ES stored in memory.
-  - The Main Filter goes through all active filter Keys, and executes their respective functions on their valid users.
-
-## Main Modules & Add-ons Changes:
-
-#### Added
-
-- **[Core Module]:** Added docstrings and comments to all functions and classes, and included numerous code comments.
-- **[Database System]:** Introduced a default file extension variable.
-
-#### Changed
-
-- **[Core Module]:** Renamed some functions to provide more descriptive names reflecting their purposes.
-- **[Core Module]:** Converted _compile() method from Message System to compile_text() now as a Core function, allowing other modules to use it.
-  - Added strip_text argument, to choose whether to strip whitespace from the text or not.
-  - Also made some code improvements.
-- **[Core Module]:** Improved get_userid() function, which was not working properly in some cases.
-- **[Menu System]:** Added add_options() to add multiple options from a list of tuples
-- **[Menu System]:** Improvements made to get_option_data() function, which was not working properly in some cases.
-- **[Admins Chat]:** Adapted the Addon to work with the new Chat Filter System.
-- **[Admins Chat]:** Fixed misleading chat logic when the user was dead or alive
-- **[Admins Chat]:** Minor code improvements.
-- **[Message System]:** Sending messages to multiple lists of users will no longer iterate using playerlib and rather using lists of userid's.
+- **[Addons Monitor]:** Various optimizations, improvements and code polishing done to the system.
+- **[Settings System]:** Improved database update effeciency.
+- **[Settings System]:** Database will now only be compared and updated with the default settings on load, instead of every time the file is loaded.
+- **[Settings System]:** Tweaked settings descriptions to be more clear.
+- **[Core Module]:** Optimized compile_text() function efficiency.
+- **[Core Module]:** Optimized write_file() and read_file() functions efficiency.
+- **[Core Module]:** Optimized get_userid() function efficiency.
+- **[Core Module]:** Optimized userid_list() and player_list() functions efficiency.
+- **[Core Module]:** Renamed compile_text() function to format_text().
+- **[Message System]:** Color codes now use a more flat color scheme.
+- **[Message System]:** Expanded the colors available for chat messages.
+- **[Message System]:** Optimized sorting of users before sending messages.
+- **[Chat Filter System]:** Various optimizations and improvements to the system.
+- **[Server Rules]:** Various optimizations, improvements.
+- **[Bots Manager]:** Small menu handling improvements.
 
 #### Fixed
 
-- **[Core Module]:** Fixed send_menu() function not working as intended.
-- **[Core Module]:** Fixed not being checking if the users are Admins before sending the Home Page
-- **[Message System]:** Fixed an occasion if the user was part of more than one list, the message would be sent duplicated.
-- **[Player Manager]:** Fixed Freeze & Unfreeze function not working.
+- **[Core Module]:** Fixed issue with when removing color names from text would return a blank string.
+- **[Settings System]:** Fixed the module not working at all, was left outdated upon some of the major changes to the core system in previous updates.
+- **[Settings System]:** Fixed Help Windows not working at all.
+- **[Server Rules]:** Fixed the page still using the old add_multiple_options() function which was removed in a previous update.
+- **[Server Rules]:** Fixed the default rules file being written on each load, the addon will now check if the file exists before writing it.
 
 #### Removed
 
