@@ -265,7 +265,7 @@ class PlayerEffects:
 
 
 def load():
-    for userid in es.getUseridList():
+    for userid in sam.userid_list():
         cache_player(userid)
     sam.cmds.chat('kick', kick_CMD)
 
@@ -371,8 +371,8 @@ def kick_CMD(userid, args):
         return
     if not args:
         sam.home_page(userid)
-        sam.handle_choice(1, userid)
-        sam.handle_choice(1, userid)
+        sam.menu_system.handle_choice(1, userid)
+        sam.menu_system.handle_choice(1, userid)
         return
     args = list(args)
     kicked = 0
@@ -395,7 +395,7 @@ def cache_player(userid):
 
 def msg(text, notify=True):
     if notify:
-        sam.msg.tell('#all', text)
+        sam.msg.tell('#all', text, tag='Players Manager')
 
 
 def _blind_loop(userid):

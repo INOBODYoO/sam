@@ -22,7 +22,7 @@ default_file = [
     "Cheating is strictly forbidden."
 ]
 
-sam.settings.addon_config('server_rules', {
+sam.settings.module_config('server_rules', {
     'display_on_player_activate': {
         'description': [
             'Specifies if to send rules on player connect.'

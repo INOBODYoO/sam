@@ -79,7 +79,8 @@ def addons_monitor_HANDLE(userid, choice, submenu):
         )
     
     # Add the option to view the Addon's settings
-    if choice in sam.settings.settings['Addons Settings']:
+    settings = sam.settings
+    if choice in settings.settings[settings.modules]:
         menu.separator()
         menu.add_option((choice, 'settings'), 'Settings Help Window')
         
@@ -114,6 +115,7 @@ def monitor_HANDLE(userid, choice, submenu):
     # Toggle the key value
     addon.__dict__[key] = not addon.__dict__[key]
     
+    # Return the user to the Addon monitor, rebuilding the menu
     sam.home_page(userid)
     module_menu(userid)
     addons_monitor_HANDLE(userid, addon.basename, 'addons_monitor')

@@ -54,10 +54,10 @@ def example_addon_HANDLE(uid, choice, submenu):
     # Will showcase all the available chat colors in one single chat message
     if choice == 'colors':
         colors = ['#%s%s' % (color, color) for color in sam.msg.colors.keys()]
-        colors = [colors[i:i + 6] for i in xrange(0, len(colors), 6)]
+        colors = [colors[i:i + 7] for i in xrange(0, len(colors), 7)]
         sam.msg.tell('#all', 'Chat Colors Showcase:')
         for chunck in colors:
-            sam.msg.tell('#all', '#white, '.join(chunck), log=False)
+            sam.msg.tell('#all', '#white, '.join(chunck), prefix=False, log=False)
     # Example of a center hud message
     elif choice == 'hud':
         sam.msg.hud(uid, 'This is what a Hud message looks like.')

@@ -6,28 +6,22 @@ psyco.full()
 sam = es.import_addon('sam')
 
 # Configuration
-sam.settings.addon_config('admins_chat', {
+sam.settings.module_config('admins_chat', {
     'hide_admin_group': {
-        'description': [
-            'If Admins are part of Admin Groups, the group\'s name will be displayed',
-            'in the chat next to their name. For example: [Mods] John: Hello World.',
-            'If this setting is enabled, the Admin\'s group name will not be displayed.'
-        ],
+        'description': ('Hides admin group names in chat messages',),
         'current_value': False
     },
     'allow_custom_chat_colors': {
-        'description': [
-            'Allows Admins to use custom chat colors in their chat messages.',
-            'For example: [Mods] John: #redHello #blueWorld.'
-        ],
+        'description': ('Enable custom chat colors for admins',),
         'current_value': True
     }
 })
 
+
 # Global Variables
 EMPTY = (0, 0, 0)
 ALLTALK = es.ServerVar('sv_alltalk')
-TAGS = {0: '#gray', 1: '#spec', 2: '#t', 3: '#ct'}
+TAGS = {0: '#gray', 1: '#spec', 2: '#terro', 3: '#ct'}
 TEAMS = {1: 'Spectators', 2: 'Terrorists', 3: 'Counter-Terrorists'}
 
 def load():
@@ -66,7 +60,7 @@ def admins_chat_FILTER(userid, text, teamchat):
     group = sam.admins.get_admin_group(userid)
     
     if group and not sam.settings('admins_chat').hide_admin_group:
-        group = '#white(%s#white) ' % group.name
+        group = '#silver[%s#silver] ' % group.name
     else:
         group = ''
 
@@ -98,8 +92,10 @@ def admins_chat_FILTER(userid, text, teamchat):
         # Format the text before sending it
         tags = ''.join(('*DEAD* ' if user.isdead else '',
                         '(%s) ' % TEAMS[team] if teamchat else '',
+                        group,
                         TAGS[team],
                         user.name))
+        
         new_text = '#default%s #default:  #white%s' % (tags, text)
         # If the user is dead, he may only speak to dead players
         # and if he is alive, he may only speak to living players
