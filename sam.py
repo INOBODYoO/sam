@@ -39,7 +39,6 @@ plugin.developer_mode = 1
 # 3 = Sandbox Mode (Anyone can access anything in the menu
 #     even if not a Super or Regular Admin)
 # 4 = Prints all settings updates to console
-# """""f debug(lvl, *message):
 def debug(lvl, *message):
     if lvl == plugin.developer_mode:
         for line in message:
@@ -58,7 +57,6 @@ print('[SAM]   - Initializing Core Systems')
 class _Cache:
     sounds = {}
     temp = {}
-
 
 cache = _Cache()
 
@@ -102,6 +100,13 @@ class DynamicAttributes(object):
 
     def __setattr__(self, attr, value):
         self.__dict__[attr] = value
+        
+    def get(self, attr, default=False):
+        """
+        Alternative way to get an attribute as a string
+        """
+        
+        return self.__dict__.get(attr, default)
 
 import os
 
@@ -263,7 +268,7 @@ class _SettingsSystem:
             return self.settings[self.general][arg]['current_value']
 
         # If the argument is one of the addons, return the addon settings
-        elif arg in self.settings[self.modules].keys():
+        elif self.settings[self.modules].keys():
             return DynamicAttributes(self.settings[self.modules][arg], 'current_value')
     
     def update_settings(self):
@@ -582,7 +587,7 @@ class _MessageSystem:
             'slategray': '708090', 'crimson': 'DC143C', 'tomato': 'FF6347',
             'orchid': 'DA70D6', 'chartreuse': '7FFF00', 'steelblue': '4682B4',
             'peru': 'CD853F', 'darkslategray': '2F4F4F', 'firebrick': 'B22222',
-            'rosybrown': 'BC8F8F', 'darkolivegreen': '556B2F'
+            'rosybrown': 'BC8F8F', 'darkolivegreen': '556B2F', 'beige': 'F5F5DC',
         }
 
 
@@ -645,17 +650,16 @@ class _MessageSystem:
             # otherwise use the given prefix
             if not isinstance(prefix, str):
                 prefix = settings('chat_prefix')
-
-            prefix = '#default%s #silver| ' % prefix if prefix else ''
+            prefix = '#default%s #gray| ' % prefix if prefix else ''
 
         # If prefix is False, then don't use any prefix
         else: prefix = ''
         
         # Setup the tag to be used in the message
-        tag = '#coral%s #silver| ' % (tag) if tag else ''
+        tag = '#coral%s #gray| ' % (tag) if tag else ''
 
         # Merge the prefix, tag, and message into one text
-        text = '#default' + prefix + tag + '#lavender' + message
+        text = '#default' + prefix + tag + '#beige' + message
 
         # Check if the message is in the spam queue
         if self.is_spam(text) and settings('anti_spam_chat_messages'):
@@ -958,6 +962,11 @@ class _AdminsSystem:
         """
         Checks whether an Admin has permission to perform an action.
         """
+        
+        # We return True if the permission is set to False, as a way to accommodate
+        # the Players Manager commands which do not have a permission assigned
+        if not permission:
+            return True
 
         # Check if developer mode is level 3
         if plugin.developer_mode == 3:
@@ -967,7 +976,7 @@ class _AdminsSystem:
         admin = self.__call__(user)
         
         # Check if the admin is valid
-        if not admin:
+        if not admin or not permission:
             return False
         
         # Get the admin group object
@@ -1376,7 +1385,10 @@ class _CommandsSystem:
         Notifies the user that they don't have permission to use the command
         """
 
-        msg.hud(userid, 'Commands System: You have permission no to this command!')
+        msg.hud(
+            userid,
+            'Commands System: You do not have permission to use this command!'
+        )
         
     @staticmethod
     def is_disabled(userid):
@@ -1492,6 +1504,7 @@ class _MenuSystem:
         self.menus = {}
         self.users_active_menu = {}
         self.users_previous_menu = {}
+        self.users_menu_history = {}
         
     def handle_choice(self, choice, user, force_close=False):
         """
@@ -1528,12 +1541,16 @@ class _MenuSystem:
             msg.console('Invalid Menu ID (%s), could not send menu to user.' % menu_id,
                         'Menu System')
     
-    def exists(self, menu_id):
+    def exists(self, menu):
         """
         Checks whether the given menu exists
         """
-
-        return self.menus.get(menu_id, False)
+        
+        if isinstance(menu, str):
+            return self.menus.get(menu, False)
+        elif isinstance(menu, Menu) or isinstance(menu, self.SubMenu):
+            return self.menus.get(menu.menu_id, False)
+        return False
           
     def get_active_menu(self, userid):
         """
@@ -1586,7 +1603,12 @@ class _MenuSystem:
         active = self.get_active_menu(userid)
         if not active or not self.exists(active.menu_id):
             return
-    
+        
+        # Save the active menu and page in the user's menu history
+        if userid not in self.users_menu_history.keys():
+            self.users_menu_history[userid] = {}
+        self.users_menu_history[userid][active.menu_id] = active.page
+
         # Set the active menu now as the user's previous menu,
         # and remove it as the active menu
         self.users_previous_menu[userid] = active.__dict__.copy()
@@ -1594,12 +1616,25 @@ class _MenuSystem:
 
         # Get the active menu class object
         menu = self.menus[active.menu_id]
-
+    
         # If the user chose 0 (the 10th option), and the menu has a close option
         if choice == 10 and menu.close_option:
-            # If the menu has a submenu and the submenu is stil valid, send it to the user
-            if menu.submenu and menu.submenu in self.menus.keys():
-                self.menus[menu.submenu].send(userid, menu.submenu_page)
+
+            # Get the the submenu, if there's any
+            submenu = self.exists(menu.submenu)
+            
+            if submenu:
+                # Get the user's menu history
+                history = self.users_menu_history[userid]
+                
+                # If submenu is in the user's menu history, the send the user to the 
+                # last page saved in history
+                if submenu.menu_id in history.keys():
+                    submenu.send(userid, history[submenu.menu_id])
+                # Otherwise, send the user to the page saved in submenu object
+                else:
+                    self.menus[submenu.menu_id].send(userid, menu.submenu_page)
+    
             return
 
         # If the choice is 8 and there's a previous page,
@@ -2061,7 +2096,7 @@ def sam_CMD(userid, args):
     """
     Command to open SAM's home page
     """
-
+    
     # Check if the Admins database is empty
     if not admins.admins:
         # Proceed to first admin setup
@@ -2400,7 +2435,7 @@ def write_file(file_path, lines):
         f.write('\n'.join(lines))
 
 
-def _decache_player(userid):
+def decache_player(userid):
     """
     Decaches the player from the various systems
     """
@@ -2414,6 +2449,8 @@ def _decache_player(userid):
         del menu_system.users_active_menu[userid]
     if userid in menu_system.users_previous_menu:
         del menu_system.users_previous_menu[userid]
+    if userid in menu_system.users_menu_history:
+        del menu_system.users_menu_history[userid]
 
     # Decache the player from any active chat filters
     for filter_id in chat_filter.filters:
@@ -2428,7 +2465,8 @@ def clear_cache_and_save_data():
     menu_system.menus.clear()
     menu_system.users_active_menu.clear()
     menu_system.users_previous_menu.clear()
-
+    menu_system.users_menu_history.clear()
+    
     # Clear temporary cache
     cache.temp.clear()
 
@@ -2487,7 +2525,7 @@ def player_disconnect(ev):
     steamid = ev['networkid']
 
     # Decache player from the various systems
-    _decache_player(userid)
+    decache_player(userid)
 
     # Update player info with last seen
     if steamid in players.data.keys():

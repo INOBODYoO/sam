@@ -34,7 +34,7 @@ def module_menu(userid):
     
     # Check if the user is allowed to use this module
     if not sam.admins.is_allowed(userid, 'addons_monitor'):
-        sam.home_menu(userid)
+        sam.home_page(userid)
         return
 
     menu = sam.Menu('addons_monitor', addons_monitor_HANDLE, 'home_page')
@@ -116,6 +116,4 @@ def monitor_HANDLE(userid, choice, submenu):
     addon.__dict__[key] = not addon.__dict__[key]
     
     # Return the user to the Addon monitor, rebuilding the menu
-    sam.home_page(userid)
-    module_menu(userid)
     addons_monitor_HANDLE(userid, addon.basename, 'addons_monitor')

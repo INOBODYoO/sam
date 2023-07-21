@@ -3,6 +3,28 @@
 This document serves as a changelog for the project's continuous development. 
 It aims to document updates and changes along with their corresponding release dates.
 
+# 21-07-2023 Update Notes:
+
+#### Added
+
+- **[Players Manager]** Added command triggers for all penalties/effects.
+- **[Players Manager]** Added a configuration file for the module, to simply enable/disable the commands for each penalties/effects.
+- **[Core Module]** Added `get()` function to DynamicAttributes class, as an alternative to return the value of an attribute using a string
+
+#### Changed
+
+- **[Players Manager]** Optimized the Set Firework animation function.
+- **[Players Manager]** Re-ordered the various penalties/effects options.
+- **[Players Manager]** Improved notifications for all penalties/effects by shortening the messages and making them more clear.
+- **[Players Manager]** Implemented an enhanced color palette for messages to ensure greater clarity. Now, when a message is displayed, the target player's name will be highlighted in their respective team color. Additionally, groups of players will be highlighted in yellow for better visibility. To emphasize harmful penalties or effects, they will be displayed in a reddish color, while un-harmful penalties or effects will be presented in a greenish color.
+
+#### Fixed
+
+- **[Menu System]** Fixed issue where users were being redirected to the first page of the menu when choosing to go back to the previous page. Instead, the system now ensures that users are taken to the last page of the menu they were on.
+
+#### Removed
+
+- **[Main Modules]** Removed module tags to chat messages. As they make messages long and cluttered.
 
 # 07-07-2023 Update Notes:
 
