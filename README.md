@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/python-2.7-blue.svg)](https://www.python.org/)
 [![Counter-Strike: Source](https://img.shields.io/badge/Counter--Strike-Source-orange.svg)](https://store.steampowered.com/app/240)
-[![EventScripts](https://img.shields.io/badge/EventScripts-2.1.1.379-yellow.svg)]([https://example-link-for-eventscripts-docs](http://python.eventscripts.com/pages/Main_Page))
+[![EventScripts](https://img.shields.io/badge/EventScripts-2.1.1.379-yellow.svg)]([http://python.eventscripts.com/pages/Main_Page])
 
 ## Introduction
 
