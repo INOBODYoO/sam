@@ -1,0 +1,8 @@
+{
+    "basename": "objects_spawner",
+    "description": ["System to spawn objects, move, remove, etc."],
+    "locked": false,
+    "name": "Objects Spawner",
+    "state": false,
+    "version": "1.0.0"
+}

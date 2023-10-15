@@ -1,0 +1,8 @@
+{
+    "basename": "example_addon",
+    "description": ["Developer showcase addon"],
+    "locked": false,
+    "name": "Example Addon",
+    "state": false,
+    "version": "1.0.0"
+}

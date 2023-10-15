@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # Python Imports
 from __future__ import with_statement
-from datetime import datetime
 
 import os
 import random
-import time
 import re
+import time
+from datetime import datetime
 
 # EventScripts Imports
 import cmdlib
@@ -48,7 +48,7 @@ def debug(lvl, *message):
 # Turn off ES debug completely (if SAM debug is)
 es.server.cmd('eventscripts_debug %s' % ('0' if bool(plugin.developer_mode) else '-1'))
 
-MODULES = ('players_manager', 'addons_monitor', 'admins_manager', 'settings_manager')
+MODULES = ('players_manager', 'addons', 'admins_manager', 'settings_manager')
 FILTERS = ('#all', '#human', '#ct', '#t', '#alive', '#dead', '#spec', '#bot')
 HOME_PAGE_ADDONS = []
 
@@ -73,42 +73,45 @@ path = _Path()
 
 class DynamicAttributes(object):
     """
-    Converts a Dictionary into a class with dynamic attributes
+    Converts a dictionary into a class with dynamic attributes.
     """
-    
-    def __init__(self, obj, subkey_to_return=False):
-        
-        # We can skip if a subkey isnt specified, and just update the class
-        if not subkey_to_return:
-            self.__dict__.update(obj.copy())
-        
-        # If a subkey is specified, and if the value is a dictionary, replace that
-        # dictionary with the value of the subkey
-        converted = {}
-        if subkey_to_return:
-            for key, value in obj.items():
+
+    def __init__(self, obj, subkeys=None):
+        """
+        Initializes the class with the given dictionary and subkeys to return.
+        """
+        if not isinstance(obj, dict):
+            raise TypeError("obj must be a dictionary")
+
+        if subkeys is None:
+            self.__dict__.update(obj)
+        else:
+            converted = {}
+            for key, value in obj.iteritems():
                 if isinstance(value, dict):
-                    converted[key] = value[subkey_to_return]
+                    converted[key] = dict((subkey, value.get(subkey)) for subkey in subkeys)
                 else:
                     converted[key] = value
-
-        # Update the class with the converted dictionary
-        self.__dict__.update(converted)
+            self.__dict__.update(converted)
 
     def __getattr__(self, attr):
+        """
+        Gets the value of the given attribute.
+        """
         return self.__dict__[attr]
 
     def __setattr__(self, attr, value):
+        """
+        Sets the value of the given attribute.
+        """
         self.__dict__[attr] = value
-        
-    def get(self, attr, default=False):
-        """
-        Alternative way to get an attribute as a string
-        """
-        
-        return self.__dict__.get(attr, default)
 
-import os
+    def get(self, attr, default=None):
+        """
+        Gets the value of the given attribute as a string.
+        """
+        return str(self.__dict__.get(attr, default))
+
 
 class _DatabaseSystem:
     """
@@ -786,7 +789,7 @@ class _AddonsMonitor:
         self._verify_installed_addons()
 
         # Get Addons Monitor database
-        database = databases.load('addons_monitor')
+        database = databases.load('addons')
 
         # Get all Addons state and lock condition
         for addon in database.keys():
@@ -814,16 +817,17 @@ class _AddonsMonitor:
         installed = self.addons_dir_list()
 
         for addon in installed:
-            # Check if the metadata file is valid
-            metadata = path.addons + addon + '/metadata.json'
+            metadata = path.addons + addon + '/%s.json' % addon
             if not os.path.isfile(metadata):
-                debug(1, '[Addons Monitor] Failed to install/update %s \
-                          addon, missing metadata.json file' % title(addon))
+                debug(1, 
+                      '[Addons Monitor] Failed to install/update %s addon.' \
+                      ' (missing metadata.json file)' % addon.title())
                 continue
             metadata = databases.load(metadata, bypass=True)
             if not metadata:
-                debug(1, '[Addons Monitor] Failed to install/update %s,\
-                          invalid metadata.json file' % title(addon))
+                debug(1, 
+                      '[Addons Monitor] Failed to install/update %s addon.' \
+                      ' (invalid metadata.json file)' % addon.title())
                 continue
 
             # Confirm installation by saving copying metadata
@@ -847,7 +851,7 @@ class _AddonsMonitor:
         database = {}
         for addon in self.addons.keys():
             database[addon] = self.addons[addon].__dict__.copy()
-        databases.save('addons_monitor', database)
+        databases.save('addons', database)
 
     @staticmethod
     def addons_dir_list():
@@ -894,7 +898,7 @@ class _AdminsSystem:
         # Set up the Permissions dictionaries
         self.addons_permissions = []
         self.admins_permissions = [
-            'addons_monitor',
+            'addons',
             'admins_manager',
             'players_manager',
             'kick_players',
@@ -2055,6 +2059,9 @@ def home_page(userid):
 
     # Add main modules options
     for module in MODULES:
+        if module == 'addons':
+            menu.add_option(module, 'Addons Monitor')
+            continue
         menu.add_option(module, title(module))
 
     # Add Addons options
@@ -2065,7 +2072,7 @@ def home_page(userid):
 
         for basename in HOME_PAGE_ADDONS:
             # Get the Addon object
-            addon = addons_monitor(basename)
+            addon = addons(basename)
             # Check if the Addon is enabled
             if addon and addon.state:
                 menu.add_option(basename, addon.name)
@@ -2084,7 +2091,7 @@ def home_page_HANDLE(userid, choice, submenu):
         return
     # Otherwise, check if the choice is an Addon
     elif choice in HOME_PAGE_ADDONS:
-        addons_monitor.import_addon(choice).addon_menu(userid)
+        addons.import_addon(choice).addon_menu(userid)
         return
         
     # Send the user back to the home page

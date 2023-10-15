@@ -6,7 +6,9 @@
 
 ## Introduction
 
-Server Administration Menu (SAM) is a powerful Python 2.7 script designed for Counter-Strike: Source server administrators. With a primary focus on streamlining server modding and administration tasks, SAM offers an intuitive in-game menu system and real-time configuration updates, eliminating the need to handle complex configuration files or frequent server restarts.
+Server Administration Menu (SAM) is a powerful Python 2.7 script designed for Counter-Strike: Source server administrators powered by EventScripts by Mattie.
+With a primary focus on streamlining server modding and administration tasks, SAM offers an intuitive in-game menu system and real-time configuration updates,
+eliminating the need to handle complex configuration files or frequent server restarts.
 
 ## Key Features
 

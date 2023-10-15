@@ -1,5 +1,5 @@
 *.pyc
-*.json
+required/*.json
 *.txt
 *__init__.py
 addons/tests_addon/tests_addon.py

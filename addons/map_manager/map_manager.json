@@ -1,0 +1,8 @@
+{
+    "basename": "map_manager",
+    "description": ["System for managing server maps"],
+    "locked": false,
+    "name": "Map Manager",
+    "state": false,
+    "version": "1.0.0"
+}

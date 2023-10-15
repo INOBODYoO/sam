@@ -1,0 +1,8 @@
+{
+    "basename": "damage_display",
+    "description": ["Displays damage dealt to or taken from players"],
+    "locked": false,
+    "name": "Damage Display",
+    "state": false,
+    "version": "1.0.0"
+}

@@ -1,0 +1,8 @@
+{
+    "basename": "high_ping_kicker",
+    "description": ["System to kick players with high ping"],
+    "locked": false,
+    "name": "High Ping Kicker",
+    "state": false,
+    "version": "1.0.0"
+}

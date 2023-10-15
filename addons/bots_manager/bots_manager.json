@@ -1,0 +1,8 @@
+{
+    "basename": "bots_manager",
+    "description": ["System to manage server bots"],
+    "locked": false,
+    "name": "Bots Manager",
+    "state": false,
+    "version": "1.0.0"
+}

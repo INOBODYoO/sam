@@ -1,0 +1,8 @@
+{
+    "basename": "server_rules",
+    "description": ["Simple page to display server rules"],
+    "locked": false,
+    "name": "Server Rules",
+    "state": true,
+    "version": "1.0.0"
+}

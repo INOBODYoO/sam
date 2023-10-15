@@ -3,6 +3,25 @@
 This document serves as a changelog for the project's continuous development. 
 It aims to document updates and changes along with their corresponding release dates.
 
+# 15-10-2023 Update Notes:
+
+#### Added
+
+- None
+
+#### Changed
+
+- **[Addons Monitor]** Moved the module code to the `addons.py` file in the addons folder.
+- **[Addons Monitor]** Addons metadata file were renamed to the addon's base folder name.
+
+#### Fixed
+
+- **[GitHub]** Fixed addons metadata files not being included in the repository.
+
+#### Removed
+
+- **[Addons Monitor]** Removed addons_monitor folder.
+
 # 21-07-2023 Update Notes:
 
 #### Added

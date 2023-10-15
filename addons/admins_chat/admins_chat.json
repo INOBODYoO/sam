@@ -1,0 +1,8 @@
+{
+    "basename": "admins_chat",
+    "description": ["A special chat system for server admins"],
+    "locked": false,
+    "name": "Admins Chat",
+    "state": true,
+    "version": "1.0.0"
+}

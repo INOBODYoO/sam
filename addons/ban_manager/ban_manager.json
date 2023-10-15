@@ -1,0 +1,8 @@
+{
+    "basename": "ban_manager",
+    "description": ["Manage players bans and unbans"],
+    "locked": false,
+    "name": "Ban Manager",
+    "state": true,
+    "version": "1.0.0"
+}

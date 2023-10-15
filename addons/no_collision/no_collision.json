@@ -1,0 +1,8 @@
+{
+    "basename": "no_collision",
+    "description": ["Removes player collisions"],
+    "locked": false,
+    "name": "No Collision",
+    "state": false,
+    "version": "1.0.0"
+}
