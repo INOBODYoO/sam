@@ -13,3 +13,4 @@ required/
 .vs/sam/FileContentIndex/read.lock
 .vs/sam/v17/.wsuo
 sam.code-workspace
+addons/developer_addon/*

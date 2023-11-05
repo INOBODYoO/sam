@@ -4,10 +4,6 @@ psyco.full()
 
 # [Mandatory] Import SAM script for access to all core systems and functions
 sam = es.import_addon('sam')
-# By appending the Addon's basename to HOME_PAGE_ADDONS we're telling SAM to list this addon
-# in the home options, when chosen, addon_menu function from said Addon will be called
-sam.HOME_PAGE_ADDONS.append('example_addon')
-
 
 def addon_menu(uid):
     ''' This is where the Addon's main menu should be built and sent from '''

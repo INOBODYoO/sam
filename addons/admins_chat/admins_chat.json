@@ -4,5 +4,6 @@
     "locked": false,
     "name": "Admins Chat",
     "state": true,
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "home_page_option": false
 }

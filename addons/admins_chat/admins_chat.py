@@ -22,7 +22,7 @@ sam.settings.module_config('admins_chat', {
 EMPTY = (0, 0, 0)
 ALLTALK = es.ServerVar('sv_alltalk')
 TAGS = {0: '#gray', 1: '#spec', 2: '#terro', 3: '#ct'}
-TEAMS = {1: 'Spectators', 2: 'Terrorists', 3: 'Counter-Terrorists'}
+TEAMS = {1: 'Spectator', 2: 'Terrorists', 3: 'Counter-Terrorists'}
 
 def load():
 
@@ -39,96 +39,102 @@ def unload():
 
 def admins_chat_FILTER(userid, text, teamchat):
 
-    # Message was sent from server console
-    if str(userid) == '-1' and text:
-        msg('#human', '@#graySERVER #white: ' + text)
-        return EMPTY
-
-    # Check if the player is in a temporary filter
+    # Ignore if the user is in a temporary filter
     if sam.chat_filter.in_filter(userid):
         return userid, text, teamchat
 
-    # Mute System Support, ignore if player is muted
-    # if sam.import_addon('mute_system').is_muted(userid):
-    #   return EMPTY
+    # If the message was sent from the server console, then send a global server message
+    if userid == -1 and text:
+        msg('#human', '@#graySERVER #white: ' + text)
+        return EMPTY
 
-    # Gather user info
+    # Get the user info
     user = sam.get_player(userid)
     team = user.teamid
-    users = set(TAGS[team])
-    args = text.split()
-    group = sam.admins.get_admin_group(userid)
-    
-    if group and not sam.settings('admins_chat').hide_admin_group:
-        group = '#silver[%s#silver] ' % group.name
-    else:
-        group = ''
 
-    # Check for commands or special triggers
+    # Make sure the first argument is not a registered command, or using a command trigger
+    args = text.split()
     if is_command(args[0]):
         return userid, text, teamchat
+
     # Special trigger for center messages
     elif text.startswith('@@') and not teamchat:
         sam.msg.center('#all', text.strip('@@'))
         return EMPTY
+
+    # Special trigger for server messages
     elif text.startswith('@'):
         text = text.strip('@')
-        # Prints the message only to Admins
+
+        # If used in team chat, then sends message to admins only
         if teamchat:
             msg('#admins',
                 '%s #default:  #green%s' % (TAGS[team] + user.name, text),
                 '#white@#grayADMINS')
-        # Prints a Server message to everyone
+        
+        # If used in all chat, then sends message to everyone,
+        # regardless of their team and state
         else:
             msg('#human', '#white' + text, '#white@#graySERVER')
         return EMPTY
+
+    # If the user is an Admin group, get the group name
+    group = sam.admins.get_admin_group(sam.get_steamid(userid))
+    if group and not sam.settings('admins_chat').hide_admin_group:
+        group = ' #silver(%s#silver) ' % group.name
+    else:
+        group = ''
+
+    # Format the text with all the necessary tags    
+    text = ''.join(
+        (
+            # Add the dead tag if the user is dead
+            '#default*DEAD*' if user.isdead and team != 1 else '',
+            # Add the Spectators tag if the user is a spectator
+            '#default*SPEC*' if team == 1 and not teamchat else '',
+            # Add the team name tag if the user has spoken in team chat
+            '#default(%s)' % TEAMS[team] if teamchat else ' ',
+            # Add the group name tag if the user is an Admin group
+            group,
+            # Add the user's team color before the user name
+            TAGS[team] if team in TAGS else '#default',
+            # Add the user name
+            user.name,
+            # Add the unique Admins chat color
+            ' #default:  #beige',
+            # Add the text
+            text
+        )
+    )
+
+    # Get the users to send the message to
+    users = set([TAGS[team]])
 
     # If alltalk is on, user may speak to everyone
     if ALLTALK and not teamchat:
         users.add('#all')
 
-    # If user is in either one of the Teams
-    if team in (2,3):
-        # Format the text before sending it
-        tags = ''.join(('*DEAD* ' if user.isdead else '',
-                        '(%s) ' % TEAMS[team] if teamchat else '',
-                        group,
-                        TAGS[team],
-                        user.name))
-        
-        new_text = '#default%s #default:  #white%s' % (tags, text)
-        # If the user is dead, he may only speak to dead players
-        # and if he is alive, he may only speak to living players
-        if not ALLTALK:
-            users.add('#dead' if user.isdead else '#alive')
-        msg(users, new_text)
-    # If user is in Spectators
-    elif team == 1:
-        if teamchat:
-            msg(users, '#default(%s) %s #default:  #white%s' % (TEAMS[team],
-                                                                TAGS[team] + user.name,
-                                                                text))
-            return EMPTY
-        msg(users,
-            '#default*SPEC* %s #default:  #white%s' % (TAGS[team] + user.name, text))
+    # Send the message
+    msg(users, text)
     return EMPTY
 
 
 def is_command(text):
-    """ Checks whether the text is a command, variable, or starts with a command trigger
+    """
+    Checks whether the text is a command, variable, or starts with a command trigger
     """
 
-    return any((text.startswith('!'),
-                text.startswith('/'),
-                es.exists('saycommand', text),
-                es.exists('command', text),
-                text == 'motd'))
+    return text == 'motd' or text.startswith('!') or text.startswith('/') or \
+           es.exists('saycommand', text) or es.exists('command', text)
 
 def msg(users, text, _tag=False):
-    """ Used as a wrapper to send a message as the text sent by the user """
+    """
+    Used as a wrapper to send a message as the text sent by the user
+    """
 
     # Check if Admins are allowed to use custom chat colors
     cfg = sam.settings('admins_chat')
     text = text if cfg.allow_custom_chat_colors else sam.compile_text(text, True)
     # Send the message
+
     sam.msg.tell(users, text, prefix=False, tag=_tag)

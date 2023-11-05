@@ -4,5 +4,6 @@
     "locked": false,
     "name": "Damage Display",
     "state": false,
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "home_page_option": false
 }

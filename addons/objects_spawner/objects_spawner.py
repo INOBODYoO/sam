@@ -5,7 +5,6 @@ import psyco
 psyco.full()
 
 sam = es.import_addon('sam')
-sam.HOME_PAGE_ADDONS.append('objects_spawner')
 
 # Global Variables
 OBJECTS = sam.databases.load(sam.path.addons + '/objects_spawner/objects.json', True)

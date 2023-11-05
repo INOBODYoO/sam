@@ -1,4 +1,6 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Python Imports
 from __future__ import with_statement
 
@@ -13,19 +15,19 @@ import cmdlib
 import es
 import gamethread
 import playerlib
-import psyco
 import simplejson as json
 import usermsg
+import psyco
 
 psyco.full()
 
 # Plugin Info & Global Variables
 plugin = es.AddonInfo()
 plugin.name = 'S.A.M (Server Administration Menu) [Remastered]'
-plugin.version = '0.0.1'
+plugin.version = '0.1.0'
 plugin.basename = 'sam'
 plugin.author = 'NOBODY'
-plugin.description = 'AllInOne tool for addons monitoring & server/players administration'
+plugin.description = 'All-in-one tool featuring various modules for server management.'
 plugin.url = 'https://github.com/INOBODYoO/sam'
 plugin.developer_mode = 1
 
@@ -50,9 +52,8 @@ es.server.cmd('eventscripts_debug %s' % ('0' if bool(plugin.developer_mode) else
 
 MODULES = ('players_manager', 'addons', 'admins_manager', 'settings_manager')
 FILTERS = ('#all', '#human', '#ct', '#t', '#alive', '#dead', '#spec', '#bot')
-HOME_PAGE_ADDONS = []
 
-print('[SAM]   - Initializing Core Systems')
+print('[%s][SAM] * Initializing Core Module' % datetime.now().strftime('%H:%M:%S'))
 
 class _Cache:
     sounds = {}
@@ -76,41 +77,42 @@ class DynamicAttributes(object):
     Converts a dictionary into a class with dynamic attributes.
     """
 
-    def __init__(self, obj, subkeys=None):
+    def __init__(self, dictionary, return_key=None):
         """
-        Initializes the class with the given dictionary and subkeys to return.
+        dictionary (dict): The dictionary to be converted into dynamic attributes.
+        return_key: If specified, values are extracted from nested dictionaries
+                    using this key.
         """
-        if not isinstance(obj, dict):
-            raise TypeError("obj must be a dictionary")
+        # Make sure the object is a dictionary
+        if not isinstance(dictionary, dict):
+            raise TypeError("[SAM] DynamicAttributes Class: Object must be a dictionary")
 
-        if subkeys is None:
-            self.__dict__.update(obj)
-        else:
+        if return_key:
+            # Create a new dictionary with the values extracted
+            # from the nested dictionaries.
             converted = {}
-            for key, value in obj.iteritems():
-                if isinstance(value, dict):
-                    converted[key] = dict((subkey, value.get(subkey)) for subkey in subkeys)
+            for key, value in dictionary.items():
+                # If the value is a dictionary and contains the 'return_key',
+                # use that value instead.
+                if isinstance(value, dict) and return_key in value.keys():
+                    converted[key] = value[return_key]
+                # Otherwise, use the original value.
                 else:
                     converted[key] = value
+
+            # Update the instance's attributes with the converted dictionary.
             self.__dict__.update(converted)
+        else:
+            # If 'return_key' is not provided, simply update the instance's attributes
+            # with the original dictionary.
+            self.__dict__.update(dictionary)
 
     def __getattr__(self, attr):
         """
-        Gets the value of the given attribute.
+        Get the value of the given attribute.
         """
+
         return self.__dict__[attr]
-
-    def __setattr__(self, attr, value):
-        """
-        Sets the value of the given attribute.
-        """
-        self.__dict__[attr] = value
-
-    def get(self, attr, default=None):
-        """
-        Gets the value of the given attribute as a string.
-        """
-        return str(self.__dict__.get(attr, default))
 
 
 class _DatabaseSystem:
@@ -215,9 +217,9 @@ class _SettingsSystem:
             'menus_separator_line_length': {
                 'description': [
                     'Specify the length of the separator lines in menus and pages.',
-                    'The maximum allowed value is 40.',
+                    'The maximum allowed value is 50.',
                 ],
-                'current_value': 40,
+                'current_value': 35,
             }
         }
 
@@ -311,7 +313,6 @@ class _SettingsSystem:
 
         # Check if the module is already registered
         if module in self.settings[self.modules].keys():
- 
             config = self.settings[self.modules][module]
             
             # Remove old settings
@@ -335,32 +336,34 @@ class _SettingsSystem:
     def help_window(self, userid, section):
         """
         Function to display a help window for the user to consult the given section's
-        settings desciptions and current values
+        settings descriptions and current values
         """
-        
+
         # Get the given section's settings, or return if the section is invalid
         if section == self.general:
             settings = self.settings[self.general]
         elif section in self.settings[self.modules].keys():
             settings = self.settings[self.modules][section]
         else:
-            msg.hud(userid,
-                    'Invalid settings section name: %s' % section,
-                    tag='Settings System')
+            msg.hud(
+                userid,
+                'Invalid settings section name: %s' % section,
+                tag='Settings System'
+            )
             return
 
         titled = title(section)
         seperator = '-' * 34
-        
+
         # Add the settings help window disclaimer
         lines = [
-            seperator,
-            'This window is intended for consulting the descriptions and',
-            'current values of each setting, and cannot be modified.',
-            'To modify these settings, you can use the menu or manually update',
-            'the settings file located at:',
+            '// This window displays the descriptions and current values of each setting',
+            '// and cannot be used to modify them. To modify these settings, use the menu',
+            '// or manually update the settings file located at:\n ',
             path.settings,
-            seperator + '\n \n'
+            '',
+            '// Settings For: %s Module/Addon' % section.upper(),
+            ''
         ]
 
         # For each setting add its title, description, and current value
@@ -766,13 +769,15 @@ class _AddonsMonitor:
     """
 
     class AddonClass(str):
+
         def __init__(self, addon):
             self.basename = addon
-            self.name = 'unknown_addon'
-            self.state = False
-            self.locked = False
+            self.name = 'unregisted_addon'
             self.version = '0.0'
             self.description = []
+            self.state = False
+            self.locked = False
+            self.home_page_option = False
 
         def __repr__(self):
             return str(type(self))
@@ -782,8 +787,9 @@ class _AddonsMonitor:
 
     def __init__(self):
 
-        # Init Addons dictionary instance
+        # Init Addons dictionary and home page options list
         self.addons = {}
+        self.home_page_options = []
 
         # Installed Addons verification
         self._verify_installed_addons()
@@ -793,55 +799,108 @@ class _AddonsMonitor:
 
         # Get all Addons state and lock condition
         for addon in database.keys():
+
+            # Ignore if the addon is not installed
             if addon not in self.addons.keys():
                 continue
-            for key in ('state', 'locked'):
-                self.addons[addon].__dict__[key] = database[addon][key]
-
-    def __repr__(self):
-        return str(self.addons)
-
-    def __str__(self):
-        return self.__repr__()
-
-    def __call__(self, addon):
-        
-        return self.addons[addon] if addon in self.addons.keys() else None
+            
+            # Update the Addon's class with the database data
+            # updating only boolean values
+            for key, val in database[addon].items():
+                if isinstance(val, bool):
+                    self.addons[addon].__dict__[key] = val
 
     def _verify_installed_addons(self):
         """
         Verify if all installed Addons are valid
         """
-    
-        # Loop over all installed Addons
+
+        # Get a list of all installed addons
         installed = self.addons_dir_list()
 
+        # Loop over all installed addons
         for addon in installed:
+
             metadata = path.addons + addon + '/%s.json' % addon
             if not os.path.isfile(metadata):
-                debug(1, 
-                      '[Addons Monitor] Failed to install/update %s addon.' \
-                      ' (missing metadata.json file)' % addon.title())
+                debug(1, '[Addons Monitor] Failed to install/update %s addon. ' + \
+                          '(missing %s.json file)' % (addon.title(), addon.basename))
                 continue
+            
             metadata = databases.load(metadata, bypass=True)
             if not metadata:
-                debug(1, 
-                      '[Addons Monitor] Failed to install/update %s addon.' \
-                      ' (invalid metadata.json file)' % addon.title())
+                debug(1, '[Addons Monitor] Failed to install/update %s addon. ' + \
+                          '(invalid %s.json file)' % (addon.title(), addon.basename))
                 continue
 
-            # Confirm installation by saving copying metadata
+            # Add the addon to the addons dictionary if it doesn't already exist
             if addon not in self.addons.keys():
                 self.addons[addon] = self.AddonClass(addon)
-                self.addons[addon].__dict__.update(metadata.copy())
-                continue
 
-            # Else update the Addon's info
-            for key in metadata.keys():
-                if key in ('state', 'locked') \
-                        or metadata[key] == self.addons[addon].__dict__[key]:
-                    continue
-                self.addons[addon].__dict__[key] = metadata[key]
+                # Update the class with the addon's metadata
+                self.addons[addon].__dict__.update(metadata)
+
+    def verify_for_new_addons(self):
+        
+        # Verify all installed addons
+        self._verify_installed_addons()
+
+        # Make sure any new addons are running
+        for addon in self.get_addons():
+            if addon.state and not es.exists('script', 'sam/addons/' + addon.basename):
+                self.load_addon(addon.basename)
+
+    def load_addon(self, addon):
+        """
+        Load an Addon
+        """
+
+        # Get the addon object
+        addon = self.get_addon(addon)
+
+        # Load the addon
+        msg.console('   - Loaded %s' % addon.name)
+        es.load('sam/addons/' + addon.basename)
+
+        # Check if the addon state is True
+        if not addon.state:
+            addon.state = True
+
+        # Register the addon home page option
+        if addon.home_page_option and addon.basename not in self.home_page_options:
+            self.home_page_options.append(addon.basename)
+
+    def unload_addon(self, addon):
+        """
+        Unload an Addon
+        """
+
+        # Get the addon object
+        addon = self.get_addon(addon)
+
+        # Unload the addon
+        msg.console('   - Unloaded %s' % addon.name)
+        es.unload('sam/addons/' + addon.basename)
+
+        # Check if the addon state is False
+        if addon.state:
+            addon.state = False
+
+        # Unregister the addon home page option
+        if addon.home_page_option and addon.basename in self.home_page_options:
+            self.home_page_options.remove(addon.basename)
+
+    def get_addon(self, addon):
+        """
+        Return an addon object by name.
+        """
+        return self.addons.get(addon)
+
+    def get_addons(self):
+        """
+        Return a list of all addons.
+        """
+        return self.addons.values()
 
     def save_database(self):
         """
@@ -849,26 +908,19 @@ class _AddonsMonitor:
         """
 
         database = {}
-        for addon in self.addons.keys():
-            database[addon] = self.addons[addon].__dict__.copy()
+        for addon, values in self.addons.items():
+            database[addon] = values.__dict__.copy()
         databases.save('addons', database)
-
-    @staticmethod
-    def addons_dir_list():
-        """
-        List of Addons in the addons folder
-        """
-
-        return (i for i in os.listdir(path.addons) if os.path.isdir(path.addons + i))
 
     def is_running(self, addon):
         """
         Check if an Addon is running
         """
 
-        if addon not in self.addons.keys():
-            return False
-        return self.addons[addon].state
+        # Get the addon object
+        addon = self.get_addon(addon)
+
+        return addon and addon.state
 
     def import_addon(self, addon):
         """
@@ -879,6 +931,14 @@ class _AddonsMonitor:
             debug(1, 'Could not import %s, addon is not running or is missing' % addon)
             return None
         return import_module('addons/' + addon)
+    
+    def addons_dir_list(self):
+        """
+        Return a list of all addons in the addons directory.
+        """
+
+        return [addon for addon in os.listdir(path.addons)
+                if os.path.isdir(path.addons + addon)]
 
 
 addons_monitor = _AddonsMonitor()
@@ -892,13 +952,14 @@ class _AdminsSystem:
     """
 
     def __init__(self):
+
         # Init admins and groups dictionaries
         self.admins = {}
         self.groups = {}
-        # Set up the Permissions dictionaries
-        self.addons_permissions = []
+
+        # Default Admins permissions
         self.admins_permissions = [
-            'addons',
+            'addons_monitor',
             'admins_manager',
             'players_manager',
             'kick_players',
@@ -906,36 +967,14 @@ class _AdminsSystem:
             'settings_manager'
         ]
 
+        # A list for addons to register their own permissions
+        self.addons_permissions = []
+
     def __repr__(self):
         return str(type(self))
 
     def __str__(self):
         return self.__repr__()
-
-    def __call__(self, arg=None):
-        
-        # Check if no argument was given
-        if arg is None:
-            return None
-
-        # Check if arg is a userid, if so then convert it to a SteamID
-        if isinstance(arg, int):
-            arg = get_steamid(arg)
-
-        # Check if argument is a valid admin
-        if arg in self.admins.keys():
-            return self.admins[arg]
-
-        # Check if argument is a valid group
-        elif arg in self.groups.keys():
-            return self.groups[arg]
-
-        # Check if argument is 'groups', if so then return the groups dict
-        elif arg == 'groups':
-            return self.groups
-
-        # If there's no argument at all, then return the Admins dict
-        return self.admins
 
     def is_admin(self, user):
         """
@@ -977,7 +1016,7 @@ class _AdminsSystem:
             return True
 
         # Get the Admin class object
-        admin = self.__call__(user)
+        admin = self.get_admin(user)
         
         # Check if the admin is valid
         if not admin or not permission:
@@ -1015,7 +1054,7 @@ class _AdminsSystem:
         """
 
         # Get the Admin class object
-        admin = self.__call__(user)
+        admin = self.get_admin(user)
     
         return admin.super_admin if admin else False
 
@@ -1023,19 +1062,28 @@ class _AdminsSystem:
         """
         Get a specific list of admins or groups.
     
-        - 'groups': Return a copy of the groups dictionary.
-        - 'super_admins': Return a dictionary of super admins.
-        - 'online': Return a dictionary of online admins.
-        - (default): Return a copy of the admins dictionary.
+        - 'groups': Returns the groups dictionary.
+        - 'super_admins': Return a list of super admins.
+        - 'online': Return a list of online admins.
+        - (default): Return a list of all admins.
         """
-
+        
+        # If the argument is 'groups', then return the groups dict
         if arg == 'groups':
             return self.groups.copy()
-        elif arg == 'super_admins':
-            return dict((x, y) for x, y in self.admins.copy().items() if y.super_admin)
+
+        # Get a list of all admins
+        admins = self.admins.copy().values()
+
+        # If the argument is 'super_admins', then return a list of super admins
+        if arg == 'super_admins':
+            return [admin for admin in admins if admin.super_admin]
+        
+        # If the argument is 'online', then return a list of online admins
         elif arg == 'online':
-            return dict((x, y) for x, y in self.admins.copy().items() if get_userid(x))
-        return self.admins.copy()
+            return [admin for admin in admins if get_userid(admin.steamid)]
+        
+        return admins
 
     def compare_immunity(self, admin1, admin2):
         """
@@ -1082,20 +1130,19 @@ class _AdminsSystem:
 
         return result
 
-
-    def new_admin(self, steamid, super_admin=False):
+    def new_admin(self, player, super_admin=False):
         """
         Function to create a new Admin
         """
 
         # Create the Admin
-        self.admins[steamid] = Admin(steamid, super_admin)
+        self.admins[player.steamid] = Admin(player, super_admin)
 
         # Save the database
         self.save_database()
 
         # Notify the Admin
-        userid = get_userid(steamid)
+        userid = get_userid(player.steamid)
         if userid:
             msg.hud(userid,
                     'You are now an Admin!',
@@ -1157,41 +1204,44 @@ class _AdminsSystem:
         """
 
         # Check if the group exists
-        if group not in self.groups.keys():
+        if group not in self.groups:
             return []
 
         # Return the list of members
         return [admin.steamid for admin in self.admins.values() if admin.group == group]
 
-    def get_admin_group(self, user):
+    def get_admin_group(self, steamid):
         """
         Function to get the group of an Admin
         """
 
-        # Check if user is an Admin
-        if not self.is_admin(user):
-            return False
-        
         # Get the Admin object
-        admin = self.__call__(user)
+        admin = self.get_admin(steamid)
 
-        # Get the Admin group key
-        group = admin.group
+        # Return the Admin's group object
+        return self.get_group(admin.group) if admin else None
+    
+    def get_admin(self, steamid):
+        """
+        Function to get an Admin object by its SteamID
+        """
 
-        # Check if the Admin has a group assigned
-        if not group:
-            return False
-
-        # Get the Admin Group object
-        group = self.groups.get(group, False)
+        if isinstance(steamid, int):
+            steamid = get_steamid(steamid)
+        elif is_valid_steamid(steamid):
+            steamid = steamid.upper()
+        else:
+            return None
         
-        # Check if the group exists
-        if not group:
-            admin.group = False
-            return False
+        return self.admins.get(steamid, False)
+    
+    def get_group(self, group_id):
+        """
+        Function to get an Admin Group object by its ID
+        """
 
-        # Return the group object
-        return group
+        return self.groups.get(group_id, False)
+
 
     def save_database(self):
         """
@@ -1258,7 +1308,7 @@ class _AdminsSystem:
         Initialize the Admins database by converting dictionaries to class objects.
 
         Notes:
-        - Called only on load to initialize the database.
+        - Must be called only once.
         - Converts the Admins and Groups dictionaries into Admin and Group class objects.
         """
 
@@ -1268,9 +1318,17 @@ class _AdminsSystem:
 
         # Convert the Admins database
         for steamid, data in admins_db.items():
-            admin = Admin(steamid)
+            admin = Admin(profile_system.get_player(steamid))
             admin.__dict__.update(data.copy())
             self.admins[steamid] = admin
+
+            # Update the permissions to reflect the current state of admins_permissions
+            for permission in self.admins_permissions:
+                if permission not in admin.permissions:
+                    admin.permissions[permission] = False
+            for permission in list(admin.permissions.keys()):
+                if permission not in self.admins_permissions:
+                    del admin.permissions[permission]
 
         # Convert the Groups database
         for name, data in groups_db.items():
@@ -1278,21 +1336,25 @@ class _AdminsSystem:
             group.__dict__.update(data.copy())
             self.groups[name] = group
 
-
+            # Update the permissions to reflect the current state of groups_permissions
+            for permission in self.admins_permissions:
+                if permission not in group.permissions:
+                    group.permissions[permission] = False
+            for permission in list(group.permissions.keys()):
+                if permission not in self.admins_permissions:
+                    del group.permissions[permission]
 
 admins = _AdminsSystem()
-
 
 class Admin(object):
     """
     Admin Class object
     """
 
-    def __init__(self, steamid, super_admin=False):
-        player = get_userid(steamid)
+    def __init__(self, player, super_admin=False):
 
-        self.name = es.getplayername(player) if player else 'Unregistered'
-        self.steamid = steamid
+        self.name = player.name
+        self.steamid = player.steamid
         self.admin_since = get_time('%d/%m/%Y')
         self.super_admin = super_admin
         self.ban_level = 0
@@ -1340,7 +1402,6 @@ class Group(object):
         """
 
         self.name = '#' + self.color + title(self.id) + '#default'
-
 
 class _CommandsSystem:
     """
@@ -1403,70 +1464,7 @@ class _CommandsSystem:
         msg.hud(userid, 'Commands System: This command is disabled!')
 
 
-
 cmds = _CommandsSystem()
-
-
-class _PlayersProfileSystem:
-    """
-    Systems responsible for gathering various types of information about
-    the player to be used in multiple other systems
-    """
-
-    class Player(object):
-        def __init__(self, data):
-            for key in data.keys():
-                setattr(self, key, data[key])
-
-    def __init__(self):
-        # Load database
-        self.data = databases.load('players_data')
-
-        # Update active players
-        for userid in userid_list('#human'):
-            self.update(userid)
-
-    def __call__(self, user):
-        """
-        Return the Player info as a class object
-        """
-        target = None
-        if isinstance(user, int):
-            target = get_steamid(user)
-        elif str(user).startswith('[U:') or str(user).startswith('STEAM_'):
-            target = user
-        return self.Player(self.data[target]) if target in self.data.keys() else None
-
-    def list(self):
-        return [self.Player(self.data[k]) for k in self.data.keys()]
-
-    def update(self, userid):
-        """
-        Updates the player info into the database
-        """
-        ply = get_player(userid)
-        if ply.steamid == 'BOT':
-            return
-        i = {'name': ply.name.encode('utf-8'),
-             'steamid': ply.steamid,
-             'first_seen': get_time('%d/%m/%Y'),
-             'last_seen': get_time('%d/%m/%Y at %H:%M:%S'),
-             'ban_history': [],
-             'kick_history': [],
-             'mute_history': [],
-             'reports': []}
-
-        # Update any new keys and values
-        if ply.steamid in self.data.keys():
-            d = self.data[ply.steamid]
-            for k, v in i.items():
-                if k not in self.data[ply.steamid].keys():
-                    d[k] = v
-            d['name'] = ply.name.encode('utf-8')
-        # Or add player to the database if not in yet
-        else:
-            self.data[ply.steamid] = i.copy()
-        databases.save('players_data', self.data)
 
 
 class _MenuSystem:
@@ -1705,7 +1703,7 @@ class Menu(object):
         self.timeout = 0
         self.blocked_options = []
         length = int(settings('menus_separator_line_length'))
-        self.separator_line = '-' * length if length <= 40 else 40
+        self.separator_line = '-' * length if length <= 50 else 30
 
     def title(self, text):
         """
@@ -1771,149 +1769,6 @@ class Menu(object):
         for item in options_list:
             self.add_option(*item)
 
-    def separator(self):
-        """
-        Adds a seperator line to the menu
-        """
-
-        self.add_line(self.separator_line)
-
-    def next_page(self):
-        """
-        Adds a new page to the menu
-        """
-
-        self.pages[max(self.pages.keys()) + 1] = []
-
-    def send(self, users, page=1):
-        """
-        It's called once the menu is fully setup and ready to be sent to the user.
-        Builds the given page with the menu title, description, lines, options, etc.,
-        and sends it to the user/users.
-        """
-
-        # Abort if users do not exist at all
-        if not users:
-            msg.console(
-                'Invalid user/users list, could not send menu. (%s)' % self.menu_id,
-                'Menu System'
-            )
-            return
-
-        # If the given page is not valid, then set it to the first page
-        if page not in self.pages.keys():
-            page = 1
-
-        # We build pages line by line, so we setup a list to store each line of the page
-        # which is being constructed.
-        display = []
-    
-        # First, we add the menu header, consisting of the plugin name + current version
-        # and the current time, if enabled.
-        # If the header is set to False, then will not be added.
-        if bool(self.header_text):
-            clock = ' ' * 30 + get_time('%H:%M') if settings('enable_menus_clock') else ''
-            display.append('SAM v' + plugin.version + clock + '\n \n')
-
-        # Second, we add the menu title, ideally consisting of the name of the
-        # Module/Addon, or system from which menu is being sent from.
-        if bool(self.title_text):
-            pages_length = len(self.pages.keys())
-            if self.pages_counter and pages_length > 1:
-                counter = '(%s/%s)' % (page, pages_length)
-                display.append('%s   %s' % (self.title_text, counter))
-            else:
-                display.append(self.title_text)
-    
-        # Third, we add the menu description, ideally to explain what the menu is about,
-        # or instruct the user on what to do.
-        if bool(self.description_text):
-            display.extend((self.separator_line, self.description_text))
-        display.append(self.separator_line)
-
-        # Forth, we start adding the page's lines and options
-        # Build a new list of blocked options
-        self.blocked_options = []
-
-        # Check if the number of max lines is between the valid values
-        if not 1 <= self.max_lines <= 7:
-            self.max_lines = 7
-    
-        # Iterate through the page's lines and options
-        option = 0
-        for index, line in enumerate(self.pages[page]):
-            # If it's just a text line, we simply add the line
-            if isinstance(line, str):
-                display.append(line)
-                continue
-            # If it's an option, we add it as numbered option, unless its blocked
-            option += 1
-            blocked = '' if line['blocked'] else '->'
-            display.append('%s%d. %s' % (blocked, option, line['text']))
-    
-        # Fith, we add the footer of the menu
-        if self.footer_text:
-            display.append(self.footer_text)
-
-        # Sixth, we add the previous, next and close options if necessary
-        if self.close_option:
-            display.append(self.separator_line)
-    
-        # If there's more than one page in the menu, we add the previous page option
-        if page > 1:
-            display.append('->8. Previous Page')
-        # Check if there is a next page after the given page
-        if page < len(self.pages):
-            display.append('->9. Next Page')
-    
-        if self.close_option:
-            # The close option can either be a 'Close Menu' or 'Previous Menu' option
-            # depending on whether the menu has a submenu or not
-            text = '0. %s' % ('Previous Menu' if self.submenu else 'Close Menu')
-            display.append(text)
-
-        # If nothing was added to the page, we simply abort the process
-        if not display:
-            return
-        # Otherwise, we join the page's lines and options into a single string
-        display = '\n'.join(display)
-        
-        # At this point, the page is complete, and we can cache it
-        menu_system.menus[self.menu_id] = self
-        # Sort the users list
-        users = (users,) if isinstance(users, int) else userid_list(users)
-        # Cancel any refresh process for the users
-        menu_system.cancel_refresh(users)
-
-        # Send the page to each user
-        for userid in users:
-            # Cache the menu as the user's new active menu
-            menu_system.users_active_menu[userid] = {'menu_id': self.menu_id,
-                                                     'page': page}
-            # Display the menu to the user in-game
-            es.showMenu(
-                self.timeout,
-                userid,
-                format_text(
-                    display.encode('utf-8'),
-                    remove_colors=True,
-                    remove_special=True,
-                    strip_text=False
-                )
-            )
-            # If the menu has no timeout, we start the refresh process
-            if not self.timeout:
-                delay_task(1, 'refresh_%s_page' % userid, self._refresh_page, userid)
-
-    def send_option(self, userid, option, page=None):
-        """
-        Sends the given option to the given user
-        """
-
-        option = self.get_option_data(option, page)
-        self.send(userid, option['page'])
-        menu_system.handle_choice(option['option_number'], userid)
-
     def get_option_data(self, obj, page=None):
         """
         Returns the option data of the given object
@@ -1961,7 +1816,193 @@ class Menu(object):
         # If a page was not given, then get the current page
         if not page:
             page = self._current_page()
-        return [i for i in self.pages[page] if isinstance(i, dict)]
+        return [_page for _page in self.pages[page] if isinstance(_page, dict)]
+
+    def separator(self):
+        """
+        Adds a seperator line to the menu
+        """
+
+        self.add_line(self.separator_line)
+
+    def next_page(self):
+        """
+        Adds a new page to the menu
+        """
+
+        self.pages[max(self.pages) + 1] = []
+
+    def construct_players_profile_list(self, status=None,
+                                       handle_key=None, condition_function=None):
+        """
+        This function constructs a list of player profiles from the Profile System
+        and adds them to the menu.
+
+        status: 'online' for online players, 'offline' for offline players (optional)
+        handle_key: A necessary key to be added in tuple along with the player object
+                    to be used in the menu callback function (optional)
+        condition_function: A function to be used to filter the players (optional)
+        """
+
+        def add_players_to_menu(players):
+            has_players = False
+            for player in sorted(players, key=lambda player: player.name):
+                if condition_function and not condition_function(player):
+                    continue
+                self.add_option(
+                    (handle_key, player) if handle_key else player,
+                    player.name
+                )
+                has_players = True
+            if not has_players:
+                self.add_line('* No players available', ' ')
+            return has_players
+
+        # If a status is given, add only the players of that status
+        if status in ('online', 'offline'):
+            players = profile_system.list_players(status)
+            add_players_to_menu(players)
+            return
+
+        # If no status is given, add players from both 'online' and 'offline' groups
+        for group in ('online', 'offline'):
+            self.add_line('[%s Players]' % group.title())
+            players = profile_system.list_players(group)
+            add_players_to_menu(players)
+            if group == 'online':
+                self.next_page()
+
+    def send_option(self, userid, option, page=None):
+        """
+        Sends the given option to the given user
+        """
+
+        option = self.get_option_data(option, page)
+        self.send(userid, option['page'])
+        menu_system.handle_choice(option['option_number'], userid)
+
+    def send(self, users, page=1):
+        """
+        This method is called once the menu is fully setup and ready to be sent to the user.
+        It builds the given page with the menu title, description, lines, options, etc.,
+        and sends it to the user/users.
+        """
+
+        # Abort if no users
+        if not users:
+            msg.console(
+                'Invalid user/users list, could not send menu. (%s)' % self.menu_id,
+                'Menu System'
+            )
+            return
+
+        # Default to first page if given page is invalid
+        pages = self.pages
+        if page not in pages:
+            page = 1
+
+        # List to store each line of the page
+        display = []
+
+        if self.header_text:
+            # Calculate the length of the version string
+            version_str = 'SAM v' + plugin.version
+            version_length = len(version_str)
+
+            # Calculate the number of spaces needed to align the clock
+            spaces_needed = len(self.separator_line) - version_length - len(' 12:00')
+
+            # If the total line length exceeds the length of the separator line
+            if spaces_needed < 0:
+                # Truncate the version string to fit
+                version_str = version_str[:spaces_needed]
+                # Recalculate the number of spaces needed
+                spaces_needed = len(self.separator_line) - version_length - len(' 12:00')
+
+            # Create the clock string with the correct number of spaces
+            clock = ' ' * spaces_needed + get_time('%H:%M') \
+                    if settings('enable_menus_clock') else ''
+
+            # Add the header to the display
+            display.append(version_str + clock + '\n \n')
+
+        # Add menu title
+        if self.title_text:
+            pages_length = len(pages)
+            if self.pages_counter and pages_length > 1:
+                counter = '(%s/%s)' % (page, pages_length)
+                display.append('%s   %s' % (self.title_text, counter))
+            else:
+                display.append(self.title_text)
+
+        # Add menu description
+        if self.description_text:
+            display.extend((self.separator_line, self.description_text))
+        display.append(self.separator_line)
+
+        # Add page's lines and options
+        self.blocked_options = []
+        if not 1 <= self.max_lines <= 7:
+            self.max_lines = 7
+
+        option = 0
+        for line in pages[page]:
+            if isinstance(line, str):
+                display.append(line)
+                continue
+            option += 1
+            blocked = '' if line['blocked'] else '->'
+            display.append('%s%d. %s' % (blocked, option, line['text']))
+
+        # Add menu footer
+        if self.footer_text:
+            display.append(self.footer_text)
+
+        # Add previous, next and close options if necessary
+        if self.close_option:
+            display.append(self.separator_line)
+
+        # Add previous page and next page options if necessary
+        if page > 1:
+            display.append('->8. Previous Page')
+        if page < len(pages):
+            display.append('->9. Next Page')
+
+        # Add close menu option
+        if self.close_option:
+            text = '0. %s' % ('Previous Menu' if self.submenu else 'Close Menu')
+            display.append(text)
+        
+        # Abort if nothing to display
+        if not display:
+            return
+
+        # Format the display list into a string
+        display = '\n'.join(display)
+
+        # Cache the menu into the Menu System
+        menu_system.menus[self.menu_id] = self
+
+        # Gather the users list
+        users = (users,) if isinstance(users, int) else userid_list(users)
+        
+        # Cancel any previous menu refresh to the users
+        menu_system.cancel_refresh(users)
+
+        for userid in users:
+            # Set the menu as the user's active menu
+            menu_system.users_active_menu[userid] = {'menu_id': self.menu_id,
+                                                     'page': page}
+            
+            # Send the menu to the user
+            es.showMenu(self.timeout, userid, format_text(display.encode('utf-8'),
+                                                          remove_colors=True,
+                                                          remove_special=True,
+                                                          strip_text=False))
+            # If there isnt a timeout, then refresh the menu every second
+            if not self.timeout:
+                delay_task(1, 'refresh_%s_page' % userid, self._refresh_page, userid)
+
 
     @staticmethod
     def _refresh_page(user):
@@ -1982,16 +2023,179 @@ class Menu(object):
 
     def _current_page(self):
         """
-        Returns the last edited page
+        Returns the current page being edited, unless the page is full, then it returns
+        the next page.
         """
-
+    
         page = max(self.pages.keys())
-        # Check if the number of the page options higher or equal to the max lines
+        # Get the page options once before the if statement
+        page_options = self.get_page_options(page)
+        
+        # Check if the number of the page options is higher or equal to the max lines
         # if so then initiate the next page
-        if self.max_lines and len(self.get_page_options(page)) >= self.max_lines:
+        if self.max_lines and len(page_options) + 1 > self.max_lines:
             page += 1
             self.pages[page] = []
         return page
+
+class _ProfileSystem:
+    """
+    System to gather various useful information about the players who play on the server
+    """
+
+    class PlayerProfile:
+
+        def __init__(self):
+
+            self.name = 'unregistered'
+            self.steamid = 'unregistered'
+            self.seen_since = get_time('%d/%m/%Y')
+            self.last_seen = get_time('%d/%m/%Y - %H:%M')
+            self.last_seen_timestamp = time.time()
+            self.kick_history = []
+            self.ban_history = []
+            self.mute_history = []
+            self.reports = []
+
+        def is_online(self):
+            """
+            Checks whether the player is online or not
+            """
+
+            return self.steamid in [player.steamid for player in player_list('#all')]
+
+    def __init__(self):
+
+        # Initialize the players database
+        self.database = databases.load('players_profile_database')
+
+        # Convert each player data into a PlayerProfile object
+        for steamid, data in self.database.items():
+            profile = self.PlayerProfile()
+            profile.__dict__.update(data.copy())
+            self.database[steamid] = profile
+
+        # Clear inactive players
+        self.clear_inactive_players()
+
+        # Update online players
+        for userid in userid_list():
+            self.update_player(userid)
+
+    def is_registered(self, steamid):
+        """
+        Checks whether the given user is registered in the database
+        """
+        
+        # Make sure to get a valid steamid
+        if isinstance(steamid, int):
+            steamid = get_steamid(steamid)
+
+        return steamid in self.database.keys()
+    
+    def register_player(self, userid):
+        """
+        Registers the given user in the database
+
+        Notes:
+        - This function is called automatically when a user joins the server.
+        - Registering a player should only happen when the player is online, therefore
+          the user's userid is required.
+        """
+
+        if self.is_registered(userid):
+            return
+
+        # Create a new PlayerProfile object
+        profile = self.PlayerProfile()
+        profile.name = es.getplayername(userid)
+        profile.steamid = get_steamid(userid)
+
+        # Add the new PlayerProfile object to the database
+        self.database[profile.steamid] = profile
+
+    def update_player(self, userid):
+        """
+        Updates the given player basic info, like name and last seen date
+        """
+
+        player = get_player(userid)
+
+        # Make sure the player is registered
+        if not self.is_registered(player.steamid):
+            self.register_player(userid)
+
+        # Update the basic info
+        info = self.database.get(player.steamid, False)
+        info.name = player.name
+        info.last_seen = get_time('%d/%m/%Y')
+        info.last_seen_timestamp = time.time()
+
+    def get_player(self, steamid):
+        """
+        Returns the given user's PlayerProfile object as DynamicAttributes
+        """
+
+        if isinstance(steamid, int):
+            steamid = sam.get_steamid(steamid)
+
+        player = self.database.get(steamid, False)
+
+        # Check if the player is registered
+        if not player:
+            return False
+
+        return player
+    
+    def list_players(self, status=None):
+        """
+        Returns a list of registered players, if status is 'online' than only players
+        that are only, if 'offline' then only players that are offline.
+        """
+
+        # If a status is given, return a list of online or offline players
+        if status in ('online', 'offline'):
+            
+            # Get a list of steamids of all online players
+            online = [player.steamid for player in player_list('#human')]
+
+            # Return a list of online players
+            if status == 'online':
+                return [self.get_player(steamid) for steamid in online]
+            
+            # Return a list of offline players
+            return [player for player in self.database.values()
+                    if player.steamid not in online]
+
+        # Otherwise, return a list of all players
+        return self.database.values()
+
+    def save_database(self):
+        """
+        Saves the players database
+        """
+
+        # Create a new dictionary to store the database converting the PlayerProfile
+        # objects into dictionaries
+        database = {}
+        for steamid, profile in self.database.items():
+            database[steamid] = profile.__dict__.copy()
+
+        databases.save('players_profile_database', database)
+
+    def clear_inactive_players(self):
+        """
+        Clears the database from inactive players who haven't been seen for three months
+        """
+
+        # Get the current time
+        now = time.time()
+
+        # Iterate through the database
+        for steamid, profile in self.database.items():
+            # If the player has not been seen for three months, then delete it
+            if now - profile.last_seen_timestamp >= 7776000:
+                del self.database[steamid]
 
 
 # Load/Unload Functions
@@ -2010,7 +2214,9 @@ def load():
     msg.console('* Loading Main Modules:')
     for module in MODULES:
         es.load('sam/' + module)
-        msg.console('  - Loaded %s Module' % title(module))
+        if module == 'addons':
+            module += '_monitor'
+        msg.console(' - Loaded %s Module' % title(module))
 
     # Make plugin version public
     es.setinfo('sam_version', plugin.version)
@@ -2027,7 +2233,6 @@ def unload():
 
     # Clear cache and save data
     clear_cache_and_save_data()
-    databases.save('players_data', players.data)
 
     # Delete core module commands
     cmds.delete('sam')
@@ -2039,7 +2244,8 @@ def unload():
     msg.console('* Unloading Main Modules:')
     for module in MODULES:
         es.unload('sam/' + module)
-        msg.console('* Unloaded %s Module' % title(module))
+        msg.console(' - Unloaded %s Module' % title(module))
+    msg.console('* Unloaded Core Module')
 
     msg.tell('#all', 'Unloaded', prefix='#redSAM', tag='#turquoise' + plugin.version)
 
@@ -2064,21 +2270,24 @@ def home_page(userid):
             continue
         menu.add_option(module, title(module))
 
+    # Get the list of Addons with a home page option
+    home_page_addons = addons_monitor.home_page_options
+
     # Add Addons options
-    if HOME_PAGE_ADDONS:
+    if home_page_addons:
         menu.separator()
         menu.add_line('  :: Addons')
         menu.separator()
 
-        for basename in HOME_PAGE_ADDONS:
+        for addon in home_page_addons:
             # Get the Addon object
-            addon = addons(basename)
+            addon = addons_monitor.get_addon(addon)
             # Check if the Addon is enabled
             if addon and addon.state:
-                menu.add_option(basename, addon.name)
+                menu.add_option(addon.basename, addon.name)
                 continue
             # Otherwise, remove the Addon from the list
-            HOME_PAGE_ADDONS.remove(basename)
+            home_page_addons.remove(addon.basename)
 
     menu.send(userid)
 
@@ -2090,8 +2299,8 @@ def home_page_HANDLE(userid, choice, submenu):
         import_module(choice).module_menu(userid)
         return
     # Otherwise, check if the choice is an Addon
-    elif choice in HOME_PAGE_ADDONS:
-        addons.import_addon(choice).addon_menu(userid)
+    elif choice in addons_monitor.home_page_options:
+        addons_monitor.import_addon(choice).addon_menu(userid)
         return
         
     # Send the user back to the home page
@@ -2214,7 +2423,9 @@ def admins_CMD(userid, args):
             super_admins_list.append(admin.name)
         # Otherwise, check if the admin is in a group
         elif admin.group:
-                admins_list.append('%s (%s)' % (admin.name, admins(admin.group).name))
+                admins_list.append(
+                    '%s (%s)' % (admin.name, admins.get_group(admin.group).name)
+                )
         # If nothing else, then just add the admin's name
         else:
             admins_list.append(admin.name)
@@ -2239,16 +2450,19 @@ def get_userid(user):
     Returns the userid of the given user
     """
 
-    # Use es.getuserid() for a faster result, and return it if valids
+    # Use es.getuserid() for a faster result, and return it if valid
     userid = es.getuserid(user)
     if userid:
         return userid
     
-    # Otherwise, loop through all the players
     for player in player_list('#all'):
-        # Check if the user matches the player's steamid
-        if player.steamid == user or \
-            (isinstance(user, str) and user.lower() in player.name.lower()):
+
+        # Check if user is a valid SteamID
+        if is_valid_steamid(user) and player.steamid == user:
+            return player.userid
+        
+        # Otherwise check if user is a valid name
+        elif player.name == user or user.lower() in player.name.lower():
             return player.userid
 
 
@@ -2297,6 +2511,20 @@ def userid_list(*filters):
             return [i for i in all_userid if admins.is_admin(i)]
         return playerlib.getUseridList(target if target in FILTERS else '#all')
     return [i for f in filters for i in playerlib.getUseridList(f) if f in FILTERS]
+
+
+def is_valid_steamid(string):
+    """
+    This function checks if a given string is a valid SteamID or SteamID3.
+    """
+
+    # SteamID format: STEAM_X:Y:Z
+    steamid_pattern = r"^STEAM_[0-5]:[01]:\d+$"
+
+    # SteamID3 format: [U:1:Z]
+    steamid3_pattern = r"^\[U:1:\d+\]$"
+
+    return bool(re.match(steamid_pattern, string) or re.match(steamid3_pattern, string))
 
 
 def change_team(userid, team_id):
@@ -2415,13 +2643,13 @@ def format_text(text, remove_colors=False, remove_special=True, strip_text=True)
     return text
 
 
-def read_file(file_path, default=None, default_file=None):
+def read_file(file_path, default_content=None, default_file=None):
     """
     Reads the given file and returns a list of lines
     """
     
     if not os.path.isfile(file_path) and default_file:
-        write_file(default_file, default)
+        write_file(default_file, default_content)
     
     lines = []
     with open(file_path, 'r') as f:
@@ -2468,6 +2696,9 @@ def clear_cache_and_save_data():
     Clear all system's cache and saves all systems data
     """
 
+    # Terminate all chat filters
+    chat_filter._delete_all_filters()
+
     # Clear Menu System cache
     menu_system.menus.clear()
     menu_system.users_active_menu.clear()
@@ -2477,13 +2708,11 @@ def clear_cache_and_save_data():
     # Clear temporary cache
     cache.temp.clear()
 
-    # Terminate all chat filters
-    chat_filter._delete_all_filters()
-
     # Make necessary database saves
     addons_monitor.save_database()
     admins.save_database()
     settings.save_database()
+    profile_system.save_database()
 
 # Game Events
 def server_shutdown(ev):
@@ -2500,6 +2729,10 @@ def es_map_start(ev):
     Called whenever a map loads
     """
 
+    # Check for newly installed Addons
+    addons_monitor.verify_for_new_addons()
+
+    # Clear cache and save data for all systems
     clear_cache_and_save_data()
 
 
@@ -2519,8 +2752,10 @@ def player_activate(ev):
     Called the player connects to the server and enters the game
     """
 
-    # Update player info
-    players.update(ev['userid'])
+    userid = int(ev['userid'])
+
+    # Update the player's profile
+    profile_system.update_player(userid)
 
 
 def player_disconnect(ev):
@@ -2531,13 +2766,24 @@ def player_disconnect(ev):
     userid = int(ev['userid'])
     steamid = ev['networkid']
 
+    # Update the player's profile
+    player = profile_system.get_player(steamid)
+    player.last_seen = get_time('%d/%m/%Y - %H:%M')
+    player.last_seen_timestamp = time.time()
+    player.name = ev['name']
+
     # Decache player from the various systems
     decache_player(userid)
 
-    # Update player info with last seen
-    if steamid in players.data.keys():
-        players.data[steamid]['last_seen'] = get_time('%m/%d/%Y at %H:%M:%S')
+def player_changename(ev):
+    """
+    Called whenever a player changes their name
+    """
 
+    userid = int(ev['userid'])
 
-# Class Declaration
-players = _PlayersProfileSystem()
+    # Update the player's profile
+    profile_system.update_player(userid)
+
+# Declare classes
+profile_system = _ProfileSystem()

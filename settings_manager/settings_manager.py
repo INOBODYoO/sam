@@ -49,16 +49,30 @@ def settings_manager_HANDLE(userid, choice, submenu):
     # Get the section settings
     section = settings(choice) if choice == general else settings(modules)[choice]
     titled = sam.title(choice)
-    
+
     # Lambda function to convert boolean values to strings
     f = lambda value: 'Enabled' if value else 'Disabled'
     
+    boolean_count = 0
+
     # Add each setting as an option
     for setting, value in section.items():
         if isinstance(value['current_value'], bool):
+            boolean_count += 1
             menu.add_option(
                 (choice, value), sam.title(setting) + ': ' + f(value['current_value'])
             )
+
+    # Add a note if there are toggle-able settings
+    if not boolean_count:
+        menu.add_line(
+            'There are no toggle-able settings',
+            'available for this Module/Addon.',
+            ' ',
+            'Please check the help window for',
+            'more information.'
+            ' ',
+        )
 
     # Add the help window option
     menu.separator()

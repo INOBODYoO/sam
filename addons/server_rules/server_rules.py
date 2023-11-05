@@ -1,7 +1,9 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import os
 import es
 import psyco
-
 psyco.full()
 
 sam = es.import_addon('sam')
@@ -12,8 +14,8 @@ default_file = [
     "// This file contains the server rules to be displayed on the !rules page:",
     "//",
     "// - To add or remove a rule, simply add or remove a line.",
-    "// - Changes made to this file are read in real-time and do\
-        not require reloading the plugin.",
+    "// - Changes made to this file are read in real-time and do" + \
+        "not require reloading the plugin.",
     " ",
     "Do not disrespect other players or administrators.",
     "Do not excessively spam the chat.",
@@ -25,17 +27,17 @@ default_file = [
 sam.settings.module_config('server_rules', {
     'display_on_player_activate': {
         'description': [
-            'Specifies if to send rules on player connect.'
+            'Determines whether to display rules when a player connects.'
         ],
         'current_value': False
     },
     'footer_message': {
         'description': [
-            'Message at the bottom of the rules page.',
-            'Set to False to disable the footer.'
+            'Defines the message displayed at the bottom of the rules page.',
+            'Set to False to disable the footer message.'
         ],
         'current_value': [
-            'Disrespecting rules may result in kick or ban.'
+            'Violation of these rules may lead to a kick or ban.'
         ]
     }
 })
@@ -65,10 +67,10 @@ def addon_menu(userid, args=None):
     menu.title('Server Rules')
     
     # Read the rules file, and add each rule as an enumerated option
-    menu.add_options(enumerate(sam.read_file(rules_file, rules)))
+    menu.add_options(enumerate(sam.read_file(rules_file, default_file)))
 
     # Add the footer message
-    footer = sam.settings('server_rules').footer_message.get('current_value')
+    footer = sam.settings('server_rules').footer_message
     if footer:
         menu.footer(*footer)
 
