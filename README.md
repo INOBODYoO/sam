@@ -6,13 +6,6 @@ S.A.M (Server Administration Menu) is a powerful, all-in-one tool designed to si
 
 ## Key Features
 
-* **Modular Design:** SAM is built with a modular structure, allowing for easy expansion and customization. Each module focuses on a specific aspect of server management.
-* **Menu System:** SAM utilizes a robust built-in menu system based on EventScripts' popuplib library, providing a visually appealing and intuitive interface for admins.
-* **Chat Commands:** SAM introduces a set of chat commands (e.g., `!sam`, `!rcon`, `!admins`) that allow admins to interact with the plugin directly from the game.
-* **Database System:** SAM uses JSON databases to store settings, admin data, player profiles, and addon information, ensuring persistence across server restarts.
-
-## Relevant Systems
-
 * **Menu System:** The menu system is the core of SAM's user interface. It allows admins and playersto navigate through various options and perform actions using a simple and intuitive menu structure, all in-game and in real-time.
 * **Database System:** The database system is responsible for storing and retrieving data, ensuring that settings, admin information, player profiles, and addon data are persistent across server restarts.
 * **Admins System:** The Admins System controls access to different features, addons and settings, ensuring that only authorized admins can perform specific actions. It also manages server admins and admin groups, providing functions for adding, removing, editing, and managing permissions.
