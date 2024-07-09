@@ -5,5 +5,5 @@
     "name": "Bots Manager",
     "state": false,
     "version": "1.0.0",
-    "home_page_option": false
+    "home_page_option": true
 }

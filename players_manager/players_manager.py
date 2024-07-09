@@ -43,7 +43,7 @@ class _PenaltiesClass:
             es.server.insertcmd('es_xspawnplayer %d' % userid)
 
         # If target is one of the teams, then loop though all players and respawn them
-        if target in sam.FILTERS:
+        if target in sam.PLAYER_FILTERS:
             for player in sam.player_list(target):
                 respawn_player(player)
         # Otherwise, respawn the target player
@@ -300,7 +300,7 @@ class _PenaltiesClass:
     def set_cash(target, amount, notify=True):
 
         # If target is one of the teams
-        if target in sam.FILTERS:
+        if target in sam.PLAYER_FILTERS:
             for player in sam.player_list(target):
                 player.cash = amount
         # Otherwise, set the target player cash
@@ -317,7 +317,7 @@ class _PenaltiesClass:
         send = False
         
         # If target is one of the teams
-        if target in sam.FILTERS:
+        if target in sam.PLAYER_FILTERS:
             for player in sam.player_list(target):
                 if is_alive(player):
                     player.health = amount
@@ -605,7 +605,7 @@ def module_menu(userid, page=1):
     menu = sam.Menu('players_manager', players_manager_HANDLE, 'home_page')
     menu.title('Players Manager')
 
-    for penalty in sorted(penalties.keys()):
+    for penalty in sorted(penalties):
         menu.add_option(penalty, penalties[penalty]['name'])
 
     menu.send(userid, page=page)
@@ -671,6 +671,8 @@ def players_list_HANDLE(userid, choice, submenu):
             set_cash_HANDLE if penalty_id == 12 else set_health_HANDLE,
             submenu
         )
+        menu.build_function = players_list_HANDLE
+        menu.build_arguments_list = (userid, choice, submenu)
         menu.title('Players Manager')
 
         # Set Cash Values
@@ -700,8 +702,9 @@ def set_cash_HANDLE(userid, choice, submenu):
     penalty.set_cash(*choice)
     
     # Return the admin to the previous menu, but rebuild the menu first
-    players_list_HANDLE(userid, (choice[0], 12), submenu.object.submenu)
-    sam.menu_system.send_menu(userid, submenu.menu_id, submenu.page)
+    #players_list_HANDLE(userid, (choice[0], 12), submenu.object.submenu)
+    #sam.menu_system.send_menu(userid, submenu.menu_id, submenu.page)
+    submenu.send(userid, rebuild=True)
 
 
 def set_health_HANDLE(userid, choice, submenu):
@@ -710,8 +713,7 @@ def set_health_HANDLE(userid, choice, submenu):
     penalty.set_health(*choice)
     
     # Return the admin to the previous menu, but rebuild the menu first
-    players_list_HANDLE(userid, (choice[0], 12), submenu.object.submenu)
-    sam.menu_system.send_menu(userid, submenu.menu_id, submenu.page)
+    submenu.send(userid, rebuild=True)
 
 def commands_filter(userid, args, penalty_id):
     """
@@ -742,20 +744,20 @@ def commands_filter(userid, args, penalty_id):
     target = args.pop(0) if args else False
 
     # Check whether the penalty does not accept multiple targets
-    if penalty_id not in (4, 12, 13) and target in sam.FILTERS:
+    if penalty_id not in (4, 12, 13) and target in sam.PLAYER_FILTERS:
         sam.msg.hud(userid, 'This command does not accept multiple targets')
         return
 
     # Get the target player or player filter
-    if isinstance(target, str) and target not in sam.FILTERS:
+    if isinstance(target, str) and target not in sam.PLAYER_FILTERS:
         target = sam.get_player(target)
 
     # Check if the target is not valid or is not a valid player filter
-    if not target and target not in sam.FILTERS:
+    if not target and target not in sam.PLAYER_FILTERS:
         sam.msg.hud(
             userid,
             'Target is not a valid player or player filter.',
-            'Valid Player Filters: %s' % ', '.join(sam.FILTERS)
+            'Valid Player Filters: %s' % ', '.join(sam.PLAYER_FILTERS)
         )
         return
 
@@ -801,12 +803,12 @@ def get_name(target):
     """
 
     # If target is a player:
-    if target not in sam.FILTERS:
+    if target not in sam.PLAYER_FILTERS:
         team_color = ''
         if target.team == 1:
             team_color = '#spec'
         elif target.team == 2:
-            team_color = '#terro'
+            team_color = '#t'
         elif target.team == 3:
             team_color = '#ct'
         return '%s%s#beige' % (team_color, target.name)
@@ -822,7 +824,7 @@ def get_name(target):
         return '%s players#beige' % teams[target]
 
     # Otherwise if target is another player filter
-    elif target in sam.FILTERS:
+    elif target in sam.PLAYER_FILTERS:
         return '#orange%s players#beige' % target.strip('#').title()
     
     # If nothing else return as Unknown

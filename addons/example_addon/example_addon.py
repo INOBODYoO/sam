@@ -5,7 +5,7 @@ psyco.full()
 # [Mandatory] Import SAM script for access to all core systems and functions
 sam = es.import_addon('sam')
 
-def addon_menu(uid):
+def addon_menu(userid):
     ''' This is where the Addon's main menu should be built and sent from '''
 
     menu = sam.Menu('example_addon', example_addon_HANDLE, 'home_page')
@@ -30,12 +30,13 @@ def addon_menu(uid):
     menu.separator()
     # Lines can be used as small descriptions of the options that follows them
     menu.add_line('Choose a number:')
-    for num in (1, 2, 3):
-        menu.add_option(num, num)
+    # One can add multiple options using lists/tuples
+    menu.add_options((1, 2, 3))
+    
     menu.footer('{Footer}')
-    menu.send(uid)
+    menu.send(userid)
 
-def example_addon_HANDLE(uid, choice, submenu):
+def example_addon_HANDLE(userid, choice, submenu):
     ''' In this example the user will be sent back the same
         menu =and menu =he was in, regardless of his choice. '''
 
@@ -45,7 +46,7 @@ def example_addon_HANDLE(uid, choice, submenu):
     #       the menu will be sent exactly as it was. An example to rebuild the menu was to just
     #       call the previous menu function, say in this case:
 #   addon_menu(userid)
-    submenu.send(uid)
+    submenu.send(userid)
 
     # Will showcase all the available chat colors in one single chat message
     if choice == 'colors':
@@ -56,9 +57,9 @@ def example_addon_HANDLE(uid, choice, submenu):
             sam.msg.tell('#all', '#white, '.join(chunck), prefix=False, log=False)
     # Example of a center hud message
     elif choice == 'hud':
-        sam.msg.hud(uid, 'This is what a Hud message looks like.')
+        sam.msg.hud(userid, 'This is what a Hud message looks like.')
     # Example of web menu sent in a MOTD type message
     elif choice == 'motd':
-        sam.msg.motd(uid, 'MOTD Example (google.com)', 'https://www.google.com/')
+        sam.msg.motd(userid, 'MOTD Example (google.com)', 'https://www.google.com/')
     elif isinstance(choice, int):
-        sam.msg.hud(uid, 'You have chosen the number: %s' % choice)
+        sam.msg.hud(userid, 'You have chosen the number: %s' % choice)

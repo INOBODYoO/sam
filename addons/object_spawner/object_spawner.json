@@ -1,8 +1,8 @@
 {
-    "basename": "objects_spawner",
+    "basename": "object_spawner",
     "description": ["System to spawn objects, move, remove, etc."],
     "locked": false,
-    "name": "Objects Spawner",
+    "name": "Object Spawner",
     "state": false,
     "version": "1.0.0",
     "home_page_option": true

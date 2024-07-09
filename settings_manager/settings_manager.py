@@ -24,7 +24,7 @@ def module_menu(userid):
     menu.add_option(general, general)
     
     # Get the registered modules list
-    modules_list = settings(modules).keys()
+    modules_list = settings(modules)
     
     # If there are any registered modules
     if modules_list:

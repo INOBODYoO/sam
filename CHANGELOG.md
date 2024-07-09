@@ -3,7 +3,66 @@
 This document serves as a changelog for the project's continuous development. 
 It aims to document updates and changes along with their corresponding release dates.
 
-# Update Notes - 00-00-2023
+# Update Notes - 09-07-2024
+
+### **Core Module**
+- Added `get_loaded_scripts()` to   retrieve all scripts loaded by Eventscripts, replacing `es.exist    ('script', script_path)` whichis   not functioning correctly.
+- Introduced `is_script_loaded()`   to check if a specific script is   currently loaded.
+- Optimized functions such as   `player_list()`, `userid_list()`,  `write_file()`, `read_file()`, and    `get_time()` for betterperformance and efficiency.
+- Updated `change_team()` to also   accept team nametags. (`spec`, `terro`, or `ct`).
+- Fixed `!admins` command not working, and improved the command functionality.
+
+### **Database System**:
+- Implemented `ascii_decoder()` to convert database keys from byte strings to unicode strings, ensuring compatibility with Python 2.7.
+- Fixed the system saving empty files when no data is present in the database.
+
+### **Menu System**
+- Added functionality to rebuild menus before re-sending them to users:
+    - This allows to update values from menus with valus can change while the player has a menu open.
+    - `.build_function` can be used to assign the original function that builds the menu, and `.build_arguments_list` to assign the original arguments list.
+- Introduced `locked_option_message` for displaying messages when attempting to access locked options.
+- Improved the user data cache system for better efficiency and performance.
+- Renamed and moved `_refresh_menu()` to the `Menu System` class, to be called within the system itself, instead of calling it from every menu instance.
+- Fixed issues with blocked options not working correctly.
+- Fixed major issue with `_cancel_refresh()`, not canceling the correct delayed task name, and causing a chain of instances of the same menu being called every time the menu was refreshed, resulting in a server crash.
+- Optimized `get_option_info()` and `construct_players_profile_list()` functions.
+- Simplified the `send()` function to support the new 'rebuild' functionality.
+- Enabled sending menus to multiple users at once using player filters.
+- Conducted various other code optimizations and polishing.
+
+### **Admins System**
+- Streamlined the process for renaming Admin Groups.
+- Improved the `First Admin Setup` process instructions for better clarity of each step.
+- Fixed an issue where the `Add Admin` option was listing Admins instead of Non-Admin players.
+- Fixed an error occuring while converting Admins data from the database into the Admins Class object during load.
+- Fixed an issue where upon toggling a permission in the Admin `Profile Editor` page, would not return the user to the correct page.
+- Fixed the removal process for non-existent permissions.
+
+### **Addons Monitor**
+- Reworked `_update_installed_addons()`:
+    - Re-named the function, previously named `_verify_installed_addons()`.
+    - Greatly improved the process of porting/updating addons metadata files data.
+    - Now also loads addons that can be loaded if the their state is `True`.
+- Added `_enable_addon()` and `_disable_addon()` methods for managing addon states speratly.
+    - These methods change the state of the addon and also loads/unloads the addon accordingly.
+- Added `_load_addon()` and `_unload_addon()` methods for managing addon loading and unloading.
+    - These methods only load/unload the addon, but do not change the state of the addon.
+- Introduced `.is_loaded()` method to check if an addon is loaded, replacing the `is_running()` method.
+- Renamed `get_addons()` to `addons_list()` for clarity.
+- Optimized `.save_database()` to improve efficiency.
+- Fixed the Addon Lock State toggle option not working correctly.
+- Fixed non Super Admins being able to access locked addons.
+- Removed the footer from the `Addons List` page, as it was replaced by the new locked option custom message functionality from the Menu System.
+- Removed the `Objects Spawner` addon due to a game engine bug.
+- Temporarily removed the Example Addon for rework due to system changes.
+
+### **Bots Manager Addon**
+- Fixed issue with Home Page Option, resulting the addon not being available in the Home Page.
+
+### **Admins Chat Addon**
+- Fixed messages not being processed when `allow_custom_chat_colors` is disabled.
+
+# Update Notes - 05-11-2023
 
 ## Profile System Re-Work
 - Converted player data into the new `PlayerProfile` class object after loading the database.
@@ -48,10 +107,10 @@ It aims to document updates and changes along with their corresponding release d
 
 ## Core & Main Modules & Addons
 
-### Added
+### Aditions
 - **[Menu System]** Added a new function `construct_players_profile_list()`. This function is used to construct a list of registered players profile objects from the new `Profile System`. By default contructs the list of players in two groups, first the `[Online Players]`, and second all `[Offline Players]`, the `status` parameter can be used to specify which group to return `('online' or 'offline')`. Also a `condition_function` parameter can be used to specify a function to filter the players list, so only the players that pass the condition are listed.
 
-### Changed
+### Changes
 - **[Admins System]** Removed the `__call__` function entirely from the `AdminsSystem` class, and added both `get_admin()` and `get_group()` to get the object class of each respectively.
 - **[Admins System]** Re-worked the `list()` function:
     - When returning a list of admins, the function no longer returns a copy of the admins dictionary, but instead a copy of the values of the dictionary.
@@ -65,68 +124,69 @@ It aims to document updates and changes along with their corresponding release d
 - **[Menu System]** Various improvements and optimizations to the `send()` function, which is responsible for building-up menus and sending them to users
 - **[Menu System]** Reduced the default separator length from 40 to 30, to prevent the menu from being too long and missing characters, and the max allowed length is now 50 characters.
 
-### Fixed
+### Fixes
 - **[Admins System]** Fixed on `_initialize_database()` not updating both Admins and Groups permissions correctly, if a new permission was added, or an existing one was removed.
 - **[Admins System]** Fixed `Profile Editor` page not updating correctly upon using the `Edit Group Members` option
 - **[Admins System]** Fixed `Addons Permissions` option in the `Profile Editor` page displaying an empty list if there are no addons permissions available.
 - **[Admins System]** Fixed an issue in the `Remove Admin` option, the names of regular admins to appear blank.
 - **[Core Module]** Fixed `get_userid()` function not accepting SteamID3 as a valid argument, therefore returning NoneType.
-- **[Admins Chat]** Fixed various tags, names and colors misplacements in the chat messages. (such as Admin group tag, teams names, misplaced colors, and a few more)
+- **[Admins Chat]** Fixed various tags, names and colors misplacements in the chat messages. (such as Admin group nametag, teams names, misplaced colors, and a few more)
 - **[Server Rules]** Fixed the addon not working at all, was left outdated upon some of the major changes to the Settings System in previous updates, also updated the default rules file and settings to improve clarity.
 
-### Removed
+### Removals
+
 - None
 
 
 # 15-10-2023 Update Notes:
 
-#### Added
+#### Aditions
 
 - None
 
-#### Changed
+#### Changes
 
 - **[Addons Monitor]** Moved the module code to the `addons.py` file in the addons folder.
 - **[Addons Monitor]** Addons metadata file were renamed to the addon's base folder name.
 
-#### Fixed
+#### Fixes
 
 - **[GitHub]** Fixed addons metadata files not being included in the repository.
 
-#### Removed
+#### Removals
 
 - **[Addons Monitor]** Removed addons_monitor folder.
 
 # 21-07-2023 Update Notes:
 
-#### Added
+#### Aditions
 
 - **[Players Manager]** Added command triggers for all penalties/effects.
 - **[Players Manager]** Added a configuration file for the module, to simply enable/disable the commands for each penalties/effects.
 - **[Core Module]** Added `get()` function to DynamicAttributes class, as an alternative to return the value of an attribute using a string
 
-#### Changed
+#### Changes
 
 - **[Players Manager]** Optimized the Set Firework animation function.
 - **[Players Manager]** Re-ordered the various penalties/effects options.
 - **[Players Manager]** Improved notifications for all penalties/effects by shortening the messages and making them more clear.
 - **[Players Manager]** Implemented an enhanced color palette for messages to ensure greater clarity. Now, when a message is displayed, the target player's name will be highlighted in their respective team color. Additionally, groups of players will be highlighted in yellow for better visibility. To emphasize harmful penalties or effects, they will be displayed in a reddish color, while un-harmful penalties or effects will be presented in a greenish color.
 
-#### Fixed
+#### Fixes
 
 - **[Menu System]** Fixed issue where users were being redirected to the first page of the menu when choosing to go back to the previous page. Instead, the system now ensures that users are taken to the last page of the menu they were on.
 
-#### Removed
+#### Removals
 
 - **[Main Modules]** Removed module tags to chat messages. As they make messages long and cluttered.
 
 # 07-07-2023 Update Notes:
 
-#### Added
+#### Aditions
 
 **[Main Modules]** Added module tags to chat messages.
 
-#### Changed
+#### Changes
 
 - **[Core Module]** Moved all Menu System related functions to the new Menu System class.
 - **[Core Module]** Improvements made to classes and functions documentation.
@@ -144,7 +204,7 @@ It aims to document updates and changes along with their corresponding release d
 - **[Message System]** Improved the `tell` function.
 - **[Commands System]** Optimizations to the whole Commands System class.
 
-#### Fixed
+#### Fixes
 
 - **[Core Module]** Fixed Chat Prefix showing a False instead of being completely removed.
 - **[Core Module]** Fixed disabled commands not notifying the user that the command is disabled.
@@ -157,20 +217,20 @@ It aims to document updates and changes along with their corresponding release d
 - **[Admins Chat]** Fixed Terrorists Team wrong color name.
 - **[Admins Chat]** Fixed Group tags not displaying at all.
 
-#### Removed
+#### Removals
 
 - **[Menu System]** Removed all the debug messages from the display build process.
 
 # 25-06-2023 Update Notes]
 
-#### Added
+#### Aditions
 
 - **[Core Module]:** Added user_active_menu() which returns the active menu of the user if any, else returns None.
 - **[Core Module]:** Added get_admin_group() to quickly get the admin group class object.
 - **[Settings System]:** Added comments and documentation to the systems functions.
 - **[Addons Monitor]:** Added comments and documentation to the systems functions.
 
-#### Changed
+#### Changes
 
 - **[Addons Monitor]:** Various optimizations, improvements and code polishing done to the system.
 - **[Settings System]:** Improved database update effeciency.
@@ -188,7 +248,7 @@ It aims to document updates and changes along with their corresponding release d
 - **[Server Rules]:** Various optimizations, improvements.
 - **[Bots Manager]:** Small menu handling improvements.
 
-#### Fixed
+#### Fixes
 
 - **[Core Module]:** Fixed issue with when removing color names from text would return a blank string.
 - **[Settings System]:** Fixed the module not working at all, was left outdated upon some of the major changes to the core system in previous updates.
@@ -196,6 +256,6 @@ It aims to document updates and changes along with their corresponding release d
 - **[Server Rules]:** Fixed the page still using the old add_multiple_options() function which was removed in a previous update.
 - **[Server Rules]:** Fixed the default rules file being written on each load, the addon will now check if the file exists before writing it.
 
-#### Removed
+#### Removals
 
 - None

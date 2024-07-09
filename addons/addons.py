@@ -7,27 +7,23 @@ sam = es.import_addon('sam')
 monitor = sam.addons_monitor
 
 def load():
+
+    sam.msg.console('  * Loading Addons:')
     
     # Load Addons
-    sam.msg.console('  * Loading Addons:')
-
-    for addon in monitor.get_addons():
-        # Check if the addon is enabled
-        if addon.state:
-            # Load the addon
-            monitor.load_addon(addon.basename)
+    for addon in monitor.addons_list():
+        if addon.state and not monitor.is_loaded(addon.basename):
+            monitor._load_addon(addon.basename)
 
 
 def unload():
     
-    # Unload Addons
     sam.msg.console('  * Unloading Addons:')
 
-    for addon in monitor.get_addons():
-        # Check if the addon is enabled
-        if addon.state:
-            # Unload the addon
-            monitor.unload_addon(addon.basename)
+    # Unload Addons
+    for addon in monitor.addons_list():
+        if addon.state and monitor.is_loaded(addon.basename):
+            monitor._unload_addon(addon.basename)
 
 
 def module_menu(userid):
@@ -37,22 +33,34 @@ def module_menu(userid):
         sam.home_page(userid)
         return
     
-    # Verify for new installed addons
-    monitor.verify_for_new_addons()
+    # Update installed addons
+    monitor._update_installed_addons()
+    addons_list = monitor.addons_list()
+    
+    # Check if there are any Addons installed
+    if not addons_list:
+        sam.msg.hud(userid, 'There are no Addons installed!')
+        sam.home_page(userid)
+        return
 
+    # Initialize the menu
     menu = sam.Menu('addons_monitor', addons_monitor_HANDLE, 'home_page')
     menu.max_lines = 5
+    menu.build_function = module_menu
     menu.title('Addons Monitor')
     menu.description('Select an Addon:')
 
-    # Add each addon as an option, with its state and lock state
-    for addon in sorted(monitor.get_addons(), key=lambda x: x.name):
-        state = '[running]' if addon.state else ''
+    # Add each addon, displaying its state and lock state
+    for addon in sorted(addons_list, key=lambda x: x.name):
+        state = '[loaded]' if addon.state else ''
         locked = '[locked]' if addon.locked else ''
-        menu.add_option(addon.basename, addon.name + ' ' + state + locked)
-
-    menu.footer('Locked Addons can only be',
-                'accessed by Super Admins')
+        menu.add_option(
+            addon.basename,
+            '%s %s%s' % (addon.name, state, locked),
+            addon.locked and not sam.admins.is_super_admin(userid)
+        )
+    
+    menu.locked_option_message = 'Only super admins can manage locked addons!'
     menu.send(userid)
 
 
@@ -60,6 +68,8 @@ def addons_monitor_HANDLE(userid, choice, submenu):
     
     menu = sam.Menu('monitor', monitor_HANDLE, submenu)
     menu.title('Addons Monitor')
+    menu.build_function = addons_monitor_HANDLE
+    menu.build_arguments_list = (userid, choice, submenu)
     
     # Get the addon object
     addon = monitor.get_addon(choice)
@@ -79,7 +89,7 @@ def addons_monitor_HANDLE(userid, choice, submenu):
         '[enabled] |  disabled' if addon.state else 'enabled  | [disabled]'
     )
 
-    # Add the option to toggle the Addon lock state, if the user is a super admin
+    # If the user is a super admin, add the option to toggle the Addon lock state
     if sam.admins.is_super_admin(userid):
         menu.add_line('Toggle Lock State:')
         menu.add_option(
@@ -91,7 +101,7 @@ def addons_monitor_HANDLE(userid, choice, submenu):
     settings = sam.settings
     if addon.basename in settings.settings[settings.modules]:
         menu.separator()
-        menu.add_option((addon, 'settings'), 'Settings Help Window')
+        menu.add_option((addon, 'settings'), 'View Addon Settings')
         
     # Send the menu
     menu.send(userid)
@@ -110,13 +120,26 @@ def monitor_HANDLE(userid, choice, submenu):
     # Load/Unload the addon if the key is the Addon's state
     if key == 'state':
         if addon.state:
-            monitor.unload_addon(addon.basename)
+            monitor._disable_addon(addon.basename)
         else:
-            monitor.load_addon(addon.basename)
+            monitor._enable_addon(addon.basename)
 
-        # Save the database
-        monitor.save_database()
+    elif key == 'locked':
+        monitor.addons[addon.basename].locked = not monitor.addons[addon.basename].locked
+
+    # Save the database
+    monitor.save_database()
+        
+    # Since values have been changed, we also must rebuild the Addons List page
+    # to display the updated values
+    sam.menu_system.send_menu(
+        userid,
+        menu_id='addons_monitor',
+        page=submenu.object.submenu_page,
+        rebuild=True,
+        rebuild_arguments=(userid,)
+    )
     
-    # Return the user to the Addon monitor, rebuilding the menu
-    sam.home_page(userid)
-    addons_monitor_HANDLE(userid, addon.basename, 'addons_monitor')
+    # We can now send the rebuilt Monitor page back to the user 
+    submenu.send(userid, rebuild=True)
+    

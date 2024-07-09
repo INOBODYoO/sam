@@ -1,0 +1,950 @@
+{
+    "blockage": {
+        "vending_machine_soda_01a": {
+            "type": "physics",
+            "model": "props_interiors/vendingmachinesoda01a.mdl"
+        },
+        "concrete_barrier_001a": {
+            "type": "dynamic",
+            "model": "props_c17/concrete_barrier001a.mdl"
+        },
+        "bookcase_large": {
+            "type": "dynamic",
+            "model": "props/cs_havana/bookcase_large.mdl"
+        },
+        "lockers_long": {
+            "type": "dynamic",
+            "model": "props/de_train/lockers_long.mdl"
+        },
+        "lockers_001a": {
+            "type": "dynamic",
+            "model": "props/de_train/lockers001a.mdl"
+        },
+        "bookcase_small": {
+            "type": "dynamic",
+            "model": "props/cs_havana/bookcase_small.mdl"
+        },
+        "silo_01": {
+            "type": "dynamic",
+            "model": "props/cs_militia/silo_01.mdl"
+        },
+        "logpile_2": {
+            "type": "dynamic",
+            "model": "props/cs_militia/logpile2.mdl"
+        },
+        "shelves": {
+            "type": "dynamic",
+            "model": "props/cs_militia/shelves.mdl"
+        },
+        "shelves_wood": {
+            "type": "dynamic",
+            "model": "props/cs_militia/shelves_wood.mdl"
+        },
+        "sheetrock_leaning": {
+            "type": "dynamic",
+            "model": "props/cs_militia/sheetrock_leaning.mdl"
+        },
+        "bridge_railing": {
+            "type": "dynamic",
+            "model": "props_wasteland/bridge_railing.mdl"
+        },
+        "haybale_target_03": {
+            "type": "dynamic",
+            "model": "props/cs_militia/haybale_target_03.mdl"
+        },
+        "haybale_target_02": {
+            "type": "dynamic",
+            "model": "props/cs_militia/haybale_target_02.mdl"
+        },
+        "haybale_target": {
+            "type": "dynamic",
+            "model": "props/cs_militia/haybale_target.mdl"
+        },
+        "barrel": {
+            "type": "physics",
+            "model": "props/de_train/Barrel.mdl"
+        },
+        "barrel_blue": {
+            "type": "physics",
+            "model": "props_borealis/bluebarrel001.mdl"
+        },
+        "barrelwarning": {
+            "type": "physics",
+            "model": "props/cs_assault/barrelwarning.mdl"
+        },
+        "wine_barrel": {
+            "type": "physics",
+            "model": "props/de_inferno/wine_barrel.mdl"
+        },
+        "flower_barrel": {
+            "type": "physics",
+            "model": "props/de_inferno/flower_barrel.mdl"
+        },
+        "bathroomwallhole_01_wood_broken": {
+            "type": "physics",
+            "model": "props/cs_militia/bathroomwallhole01_wood_broken.mdl"
+        },
+        "ticket_machine": {
+            "type": "dynamic",
+            "model": "props/cs_assault/ticketmachine.mdl"
+        },
+        "trainstation_sign": {
+            "type": "dynamic",
+            "model": "props/cs_assault/trainstationsign.mdl"
+        },
+        "acunit_1": {
+            "type": "dynamic",
+            "model": "props/de_train/acunit1.mdl"
+        },
+        "acunit_2": {
+            "type": "dynamic",
+            "model": "props/de_train/acunit2.mdl"
+        },
+        "biohazard_tank": {
+            "type": "physics",
+            "model": "props/de_train/biohazardtank.mdl"
+        },
+        "sawhorse": {
+            "type": "dynamic",
+            "model": "props/cs_militia/sawhorse.mdl"
+        },
+        "gravestone_001a": {
+            "type": "dynamic",
+            "model": "props_c17/gravestone001a.mdl"
+        },
+        "gravestone_002a": {
+            "type": "dynamic",
+            "model": "props_c17/gravestone002a.mdl"
+        },
+        "gravestone_003a": {
+            "type": "dynamic",
+            "model": "props_c17/gravestone003a.mdl"
+        },
+        "gravestone_004a": {
+            "type": "dynamic",
+            "model": "props_c17/gravestone004a.mdl"
+        },
+        "gravestone_cross_001a": {
+            "type": "dynamic",
+            "model": "props_c17/gravestone_cross001a.mdl"
+        },
+        "gravestone_cross_001b": {
+            "type": "dynamic",
+            "model": "props_c17/gravestone_cross001b.mdl"
+        },
+        "gravestone_statue_001a": {
+            "type": "dynamic",
+            "model": "props_c17/gravestone_statue001a.mdl"
+        },
+        "shelves_metal_4": {
+            "type": "dynamic",
+            "model": "props/cs_office/shelves_metal.mdl"
+        },
+        "shelves_metal_1": {
+            "type": "dynamic",
+            "model": "props/cs_office/shelves_metal1.mdl"
+        },
+        "shelves_metal_2": {
+            "type": "dynamic",
+            "model": "props/cs_office/shelves_metal2.mdl"
+        },
+        "shelves_metal_3": {
+            "type": "dynamic",
+            "model": "props/cs_office/shelves_metal3.mdl"
+        },
+        "paperbox_pile_01": {
+            "type": "dynamic",
+            "model": "props/cs_office/paperbox_pile_01.mdl"
+        },
+        "cargo_container_01": {
+            "type": "physics",
+            "model": "props_wasteland/cargo_container01.mdl"
+        },
+        "cargo_container_01b": {
+            "type": "physics",
+            "model": "props_wasteland/cargo_container01b.mdl"
+        },
+        "cargo_container_01c": {
+            "type": "physics",
+            "model": "props_wasteland/cargo_container01c.mdl"
+        },
+        "rockcliff_01e": {
+            "type": "dynamic",
+            "model": "props_wasteland/rockcliff01e.mdl"
+        }
+    },
+    "boxes_&_fences": {
+        "dust_crate_p": {
+            "type": "physics",
+            "model": "props_junk/wood_crate001a.mdl"
+        },
+        "bigger_dust_crate_p": {
+            "type": "physics",
+            "model": "props_junk/wood_crate002a.mdl"
+        },
+        "plasticcrate_p": {
+            "type": "physics",
+            "model": "props_junk/plasticcrate01a.mdl"
+        },
+        "box_stack1_d": {
+            "type": "dynamic",
+            "model": "props/cs_assault/box_stack1.mdl"
+        },
+        "box_stack2_d": {
+            "type": "dynamic",
+            "model": "props/cs_assault/box_stack2.mdl"
+        },
+        "dryer_box_d": {
+            "type": "dynamic",
+            "model": "props/cs_assault/dryer_box.mdl"
+        },
+        "dryer_box2_d": {
+            "type": "dynamic",
+            "model": "props/cs_assault/dryer_box2.mdl"
+        },
+        "washer_box_d": {
+            "type": "dynamic",
+            "model": "props/cs_assault/washer_box.mdl"
+        },
+        "washer_box2_d": {
+            "type": "dynamic",
+            "model": "props/cs_assault/washer_box2.mdl"
+        },
+        "boxes_frontroom_d": {
+            "type": "dynamic",
+            "model": "props/cs_militia/boxes_frontroom.mdl"
+        },
+        "boxes_garage_d": {
+            "type": "dynamic",
+            "model": "props/cs_militia/boxes_garage.mdl"
+        },
+        "boxes_garage_lower_d": {
+            "type": "dynamic",
+            "model": "props/cs_militia/boxes_garage_lower.mdl"
+        },
+        "chainlinkgate_d": {
+            "type": "dynamic",
+            "model": "props/de_train/chainlinkgate.mdl"
+        },
+        "fence_ranch_d": {
+            "type": "dynamic",
+            "model": "props/cs_militia/fence_ranch.mdl"
+        },
+        "coveredbridge01_top_d": {
+            "type": "dynamic",
+            "model": "props/cs_militia/coveredbridge01_top.mdl"
+        },
+        "coveredbridge01_bottom_d": {
+            "type": "dynamic",
+            "model": "props/cs_militia/coveredbridge01_bottom.mdl"
+        },
+        "interior_fence001a_d": {
+            "type": "dynamic",
+            "model": "props_wasteland/interior_fence001a.mdl"
+        },
+        "interior_fence001b_d": {
+            "type": "dynamic",
+            "model": "props_wasteland/interior_fence001b.mdl"
+        },
+        "interior_fence001c_d": {
+            "type": "dynamic",
+            "model": "props_wasteland/interior_fence001c.mdl"
+        },
+        "interior_fence001d_d": {
+            "type": "dynamic",
+            "model": "props_wasteland/interior_fence001d.mdl"
+        },
+        "interior_fence001e_d": {
+            "type": "dynamic",
+            "model": "props_wasteland/interior_fence001e.mdl"
+        },
+        "interior_fence001g_d": {
+            "type": "dynamic",
+            "model": "props_wasteland/interior_fence001g.mdl"
+        },
+        "interior_fence002a_d": {
+            "type": "dynamic",
+            "model": "props_wasteland/interior_fence002a.mdl"
+        },
+        "interior_fence002b_d": {
+            "type": "dynamic",
+            "model": "props_wasteland/interior_fence002b.mdl"
+        },
+        "interior_fence002d_d": {
+            "type": "dynamic",
+            "model": "props_wasteland/interior_fence002d.mdl"
+        },
+        "interior_fence003b_d": {
+            "type": "dynamic",
+            "model": "props_wasteland/interior_fence003b.mdl"
+        },
+        "interior_fence004a_d": {
+            "type": "dynamic",
+            "model": "props_wasteland/interior_fence004a.mdl"
+        },
+        "interior_fence004b_d": {
+            "type": "dynamic",
+            "model": "props_wasteland/interior_fence004b.mdl"
+        }
+    },
+    "buildings": {
+        "bench_concrete": {
+            "type": "dynamic",
+            "model": "props/de_inferno/bench_concrete.mdl"
+        },
+        "bench_wood": {
+            "type": "dynamic",
+            "model": "props/de_inferno/bench_wood.mdl"
+        },
+        "chimney_01": {
+            "type": "dynamic",
+            "model": "props/de_inferno/chimney01.mdl"
+        },
+        "chimney_02": {
+            "type": "dynamic",
+            "model": "props/de_inferno/chimney02.mdl"
+        },
+        "building_002a": {
+            "type": "dynamic",
+            "model": "props_buildings/building_002a.mdl"
+        },
+        "collapsedbuilding_01awall": {
+            "type": "dynamic",
+            "model": "props_buildings/collapsedbuilding01awall.mdl"
+        },
+        "collapsedbuilding_02a": {
+            "type": "dynamic",
+            "model": "props_buildings/collapsedbuilding02a.mdl"
+        },
+        "collapsedbuilding_02b": {
+            "type": "dynamic",
+            "model": "props_buildings/collapsedbuilding02b.mdl"
+        },
+        "collapsedbuilding_02c": {
+            "type": "dynamic",
+            "model": "props_buildings/collapsedbuilding02c.mdl"
+        },
+        "factory_skybox_001a": {
+            "type": "dynamic",
+            "model": "props_buildings/factory_skybox001a.mdl"
+        },
+        "project_building_01": {
+            "type": "dynamic",
+            "model": "props_buildings/project_building01.mdl"
+        },
+        "project_building_01_skybox": {
+            "type": "dynamic",
+            "model": "props_buildings/project_building01_skybox.mdl"
+        },
+        "project_building_02": {
+            "type": "dynamic",
+            "model": "props_buildings/project_building02.mdl"
+        },
+        "project_building_02_skybox": {
+            "type": "dynamic",
+            "model": "props_buildings/project_building02_skybox.mdl"
+        },
+        "project_building_03": {
+            "type": "dynamic",
+            "model": "props_buildings/project_building03.mdl"
+        },
+        "project_building_03_skybox": {
+            "type": "dynamic",
+            "model": "props_buildings/project_building03_skybox.mdl"
+        },
+        "project_destroyedbuildings_01": {
+            "type": "dynamic",
+            "model": "props_buildings/project_destroyedbuildings01.mdl"
+        },
+        "row_church_fullscale": {
+            "type": "dynamic",
+            "model": "props_buildings/row_church_fullscale.mdl"
+        },
+        "row_corner_1_fullscale": {
+            "type": "dynamic",
+            "model": "props_buildings/row_corner_1_fullscale.mdl"
+        },
+        "row_res_1_fullscale": {
+            "type": "dynamic",
+            "model": "props_buildings/row_res_1_fullscale.mdl"
+        },
+        "row_res_2_ascend_fullscale": {
+            "type": "dynamic",
+            "model": "props_buildings/row_res_2_ascend_fullscale.mdl"
+        },
+        "row_res_2_fullscale": {
+            "type": "dynamic",
+            "model": "props_buildings/row_res_2_fullscale.mdl"
+        },
+        "short_building_001a": {
+            "type": "dynamic",
+            "model": "props_buildings/short_building001a.mdl"
+        },
+        "watertower_001a": {
+            "type": "dynamic",
+            "model": "props_buildings/watertower_001a.mdl"
+        },
+        "watertower_001c": {
+            "type": "dynamic",
+            "model": "props_buildings/watertower_001c.mdl"
+        },
+        "watertower_002a": {
+            "type": "dynamic",
+            "model": "props_buildings/watertower_002a.mdl"
+        },
+        "bridge_low_res": {
+            "type": "dynamic",
+            "model": "props_wasteland/bridge_low_res.mdl"
+        },
+        "bridge_middle": {
+            "type": "dynamic",
+            "model": "props_wasteland/bridge_middle.mdl"
+        },
+        "chimneypipe_01a": {
+            "type": "dynamic",
+            "model": "props_wasteland/chimneypipe01a.mdl"
+        },
+        "chimneypipe_01b": {
+            "type": "dynamic",
+            "model": "props_wasteland/chimneypipe01b.mdl"
+        },
+        "chimneypipe_02a": {
+            "type": "dynamic",
+            "model": "props_wasteland/chimneypipe02a.mdl"
+        },
+        "chimneypipe_02b": {
+            "type": "dynamic",
+            "model": "props_wasteland/chimneypipe02b.mdl"
+        },
+        "powertower_01": {
+            "type": "dynamic",
+            "model": "props_wasteland/powertower01.mdl"
+        },
+        "bumperpost": {
+            "type": "dynamic",
+            "model": "props/de_train/trainbumperpost.mdl"
+        },
+        "processor": {
+            "type": "dynamic",
+            "model": "props/de_train/processor.mdl"
+        },
+        "processor_nobase": {
+            "type": "dynamic",
+            "model": "props/de_train/processor_nobase.mdl"
+        },
+        "coolingtank": {
+            "type": "dynamic",
+            "model": "props/de_train/de_train_horizontalcoolingtank.mdl"
+        },
+        "signalbox": {
+            "type": "dynamic",
+            "model": "props/de_train/de_train_signalbox_01.mdl"
+        }
+    },
+    "foliage": {
+        "oak_tree_01": {
+            "type": "dynamic",
+            "model": "props_foliage/oak_tree01.mdl"
+        },
+        "tree_cliff_01a": {
+            "type": "dynamic",
+            "model": "props_foliage/tree_cliff_01a.mdl"
+        },
+        "tree_cliff_02a": {
+            "type": "dynamic",
+            "model": "props_foliage/tree_cliff_02a.mdl"
+        },
+        "tree_deciduous_01a": {
+            "type": "dynamic",
+            "model": "props_foliage/tree_deciduous_01a.mdl"
+        },
+        "tree_deciduous_01a-lod": {
+            "type": "dynamic",
+            "model": "props_foliage/tree_deciduous_01a-lod.mdl"
+        },
+        "tree_deciduous_02a": {
+            "type": "dynamic",
+            "model": "props_foliage/tree_deciduous_02a.mdl"
+        },
+        "tree_deciduous_03a": {
+            "type": "dynamic",
+            "model": "props_foliage/tree_deciduous_03a.mdl"
+        },
+        "tree_deciduous_03b": {
+            "type": "dynamic",
+            "model": "props_foliage/tree_deciduous_03b.mdl"
+        },
+        "tree_poplar_01": {
+            "type": "dynamic",
+            "model": "props_foliage/tree_poplar_01.mdl"
+        },
+        "driftwood_01a": {
+            "type": "dynamic",
+            "model": "props_foliage/driftwood_01a.mdl"
+        },
+        "driftwood_02a": {
+            "type": "dynamic",
+            "model": "props_foliage/driftwood_02a.mdl"
+        },
+        "driftwood_03a": {
+            "type": "dynamic",
+            "model": "props_foliage/driftwood_03a.mdl"
+        },
+        "driftwood_clump_01a": {
+            "type": "dynamic",
+            "model": "props_foliage/driftwood_clump_01a.mdl"
+        },
+        "driftwood_clump_02a": {
+            "type": "dynamic",
+            "model": "props_foliage/driftwood_clump_02a.mdl"
+        },
+        "driftwood_clump_03a": {
+            "type": "dynamic",
+            "model": "props_foliage/driftwood_clump_03a.mdl"
+        },
+        "tree_large_militia": {
+            "type": "dynamic",
+            "model": "props/cs_militia/tree_large_militia.mdl"
+        }
+    },
+    "furniture": {
+        "dryer": {
+            "type": "physics",
+            "model": "props/cs_militia/dryer.mdl"
+        },
+        "fire_extinguisher": {
+            "type": "physics",
+            "model": "props/cs_office/fire_extinguisher.mdl"
+        },
+        "inferno_bed": {
+            "type": "dynamic",
+            "model": "props/de_inferno/bed.mdl"
+        },
+        "chair_antique": {
+            "type": "physics",
+            "model": "props/de_inferno/chairantique.mdl"
+        },
+        "furniture_armchair_001a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureArmchair001a.mdl"
+        },
+        "furniture_bathtub_001a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureBathtub001a.mdl"
+        },
+        "furniture_bed_001a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureBed001a.mdl"
+        },
+        "furniture_boiler_001a": {
+            "type": "dynamic",
+            "model": "props_c17/FurnitureBoiler001a.mdl"
+        },
+        "furniture_chair_001a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureChair001a.mdl"
+        },
+        "furniture_couch_001a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureCouch001a.mdl"
+        },
+        "furniture_couch_002a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureCouch002a.mdl"
+        },
+        "furniture_cupboard_001a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureCupboard001a.mdl"
+        },
+        "furniture_drawer_001a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureDrawer001a.mdl"
+        },
+        "furniture_drawer_002a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureDrawer002a.mdl"
+        },
+        "furniture_drawer_003a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureDrawer003a.mdl"
+        },
+        "furniture_dresser_001a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureDresser001a.mdl"
+        },
+        "furniture_fireplace_001a": {
+            "type": "dynamic",
+            "model": "props_c17/FurnitureFireplace001a.mdl"
+        },
+        "furniture_fridge_001a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureFridge001a.mdl"
+        },
+        "furniture_mattress_001a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureMattress001a.mdl"
+        },
+        "furniture_radiator_001a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureRadiator001a.mdl"
+        },
+        "furniture_shelf_01a": {
+            "type": "dynamic",
+            "model": "props/cs_militia/furniture_shelf01a.mdl"
+        },
+        "furniture_shelf_001a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureShelf001a.mdl"
+        },
+        "furniture_shelf_001b": {
+            "type": "physics",
+            "model": "props_c17/FurnitureShelf001b.mdl"
+        },
+        "furniture_shelf_002a": {
+            "type": "dynamic",
+            "model": "props_c17/FurnitureShelf002a.mdl"
+        },
+        "furniture_sink_001a": {
+            "type": "dynamic",
+            "model": "props_c17/FurnitureSink001a.mdl"
+        },
+        "furniture_stove_001a": {
+            "type": "physics",
+            "model": "props_c17/furnitureStove001a.mdl"
+        },
+        "furniture_table_001a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureTable001a.mdl"
+        },
+        "furniture_table_002a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureTable002a.mdl"
+        },
+        "furniture_table_003a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureTable003a.mdl"
+        },
+        "furniture_toilet_001a": {
+            "type": "dynamic",
+            "model": "props_c17/FurnitureToilet001a.mdl"
+        },
+        "furniture_washingmachine_001a": {
+            "type": "physics",
+            "model": "props_c17/FurnitureWashingmachine001a.mdl"
+        },
+        "cafeteria_bench_001a": {
+            "type": "physics",
+            "model": "props_wasteland/cafeteria_bench001a.mdl"
+        },
+        "cafeteria_table_001a": {
+            "type": "physics",
+            "model": "props_wasteland/cafeteria_table001a.mdl"
+        }
+    },
+    "miscellaneous": {
+        "exploding_barrel": {
+            "type": "physics",
+            "model": "props_c17/oildrum001_explosive.mdl"
+        },
+        "swampy_turtle": {
+            "type": "physics",
+            "model": "props/de_tides/Vending_turtle.mdl"
+        },
+        "i_love_swampy_turtle_hat": {
+            "type": "physics",
+            "model": "props/de_tides/Vending_hat.mdl"
+        },
+        "item_crate": {
+            "type": "physics",
+            "model": "items/item_item_crate.mdl"
+        },
+        "watermelon": {
+            "type": "physics",
+            "model": "props_junk/watermelon01.mdl"
+        },
+        "banana_bunch": {
+            "type": "physics",
+            "model": "props/cs_italy/bananna_bunch.mdl"
+        },
+        "orange": {
+            "type": "physics",
+            "model": "props/cs_italy/orange.mdl"
+        },
+        "banana": {
+            "type": "physics",
+            "model": "props/cs_italy/bananna.mdl"
+        },
+        "mailbox01_dynamic": {
+            "type": "dynamic",
+            "model": "props/cs_militia/mailbox01.mdl"
+        },
+        "case_of_beer_dynamic": {
+            "type": "dynamic",
+            "model": "props/cs_militia/caseofbeer01.mdl"
+        },
+        "gazebo_dynamic": {
+            "type": "dynamic",
+            "model": "props/cs_havana/gazebo.mdl"
+        },
+        "toilet_dynamic": {
+            "type": "dynamic",
+            "model": "props/cs_militia/toilet.mdl"
+        },
+        "cart_wheel": {
+            "type": "physics",
+            "model": "props/de_inferno/cart_wheel.mdl"
+        },
+        "bar_stool": {
+            "type": "physics",
+            "model": "props/cs_militia/barstool01.mdl"
+        },
+        "traffic_cone": {
+            "type": "physics",
+            "model": "props_junk/TrafficCone001a.mdl"
+        },
+        "traffic_barrel": {
+            "type": "physics",
+            "model": "props/cs_assault/barrelwarning.mdl"
+        },
+        "paint_bucket": {
+            "type": "physics",
+            "model": "props/cs_militia/paintbucket01.mdl"
+        },
+        "glass_window": {
+            "type": "physics",
+            "model": "props/cs_militia/militiawindow02_breakable.mdl"
+        },
+        "glass_window2": {
+            "type": "physics",
+            "model": "props/cs_militia/wndw01.mdl"
+        },
+        "lockerbench": {
+            "type": "dynamic",
+            "model": "props/de_train/lockerbench.mdl"
+        },
+        "meter": {
+            "type": "dynamic",
+            "model": "props/cs_assault/meter.mdl"
+        },
+        "handrail04_doublerise": {
+            "type": "dynamic",
+            "model": "props_c17/handrail04_doublerise.mdl"
+        },
+        "rustyrailing02": {
+            "type": "dynamic",
+            "model": "props/cs_assault/rustyrailing02.mdl"
+        },
+        "it_blc_small": {
+            "type": "dynamic",
+            "model": "props/cs_italy/it_blc_small.mdl"
+        },
+        "it_blc_med": {
+            "type": "dynamic",
+            "model": "props/cs_italy/it_blc_med.mdl"
+        },
+        "bench_concrete": {
+            "type": "dynamic",
+            "model": "props/de_inferno/bench_concrete.mdl"
+        },
+        "bench_wood": {
+            "type": "dynamic",
+            "model": "props/de_inferno/bench_wood.mdl"
+        },
+        "ladderaluminium128": {
+            "type": "dynamic",
+            "model": "props/cs_assault/ladderaluminium128.mdl"
+        },
+        "ladderrung": {
+            "type": "dynamic",
+            "model": "props/cs_militia/ladderrung.mdl"
+        },
+        "ladderwood": {
+            "type": "dynamic",
+            "model": "props/cs_militia/ladderwood.mdl"
+        },
+        "ropeladder": {
+            "type": "dynamic",
+            "model": "props/cs_militia/ropeladder01.mdl"
+        },
+        "ladderaluminium": {
+            "type": "dynamic",
+            "model": "props/de_train/ladderaluminium.mdl"
+        },
+        "metalladder001": {
+            "type": "dynamic",
+            "model": "props_c17/metalladder001.mdl"
+        },
+        "metalladder002": {
+            "type": "dynamic",
+            "model": "props_c17/metalladder002.mdl"
+        },
+        "metalladder003": {
+            "type": "dynamic",
+            "model": "props_c17/metalladder003.mdl"
+        },
+        "antlionhill": {
+            "type": "dynamic",
+            "model": "props_wasteland/antlionhill.mdl"
+        },
+        "barricade001a": {
+            "type": "physics",
+            "model": "props_wasteland/barricade001a.mdl"
+        },
+        "barricade002a": {
+            "type": "physics",
+            "model": "props_wasteland/barricade002a.mdl"
+        }
+    },
+    "office": {
+        "file_cabinet_group": {
+            "type": "physics",
+            "model": "props/cs_office/file_cabinet1_group.mdl"
+        },
+        "tv_plasma": {
+            "type": "physics",
+            "model": "props/cs_office/tv_plasma.mdl"
+        },
+        "trash_can": {
+            "type": "physics",
+            "model": "props/cs_office/trash_can.mdl"
+        },
+        "table_meeting": {
+            "type": "dynamic",
+            "model": "props/cs_office/table_meeting.mdl"
+        },
+        "table_coffee": {
+            "type": "physics",
+            "model": "props/cs_office/table_coffee.mdl"
+        },
+        "radio": {
+            "type": "physics",
+            "model": "props/cs_office/radio.mdl"
+        },
+        "projector": {
+            "type": "physics",
+            "model": "props/cs_office/projector.mdl"
+        },
+        "projector_remote": {
+            "type": "physics",
+            "model": "props/cs_office/projector_remote.mdl"
+        },
+        "phone": {
+            "type": "physics",
+            "model": "props/cs_office/phone.mdl"
+        },
+        "paper_towels": {
+            "type": "physics",
+            "model": "props/cs_office/paper_towels.mdl"
+        },
+        "office_plant01": {
+            "type": "physics",
+            "model": "props/cs_office/plant01.mdl"
+        },
+        "file_cabinet": {
+            "type": "physics",
+            "model": "props/cs_office/file_cabinet1.mdl"
+        },
+        "file_cabinet2": {
+            "type": "physics",
+            "model": "props/cs_office/file_cabinet2.mdl"
+        },
+        "file_cabinet3": {
+            "type": "physics",
+            "model": "props/cs_office/file_cabinet3.mdl"
+        },
+        "file_box": {
+            "type": "physics",
+            "model": "props/cs_office/file_box.mdl"
+        },
+        "comp_tower": {
+            "type": "physics",
+            "model": "props/cs_office/computer_caseb.mdl"
+        },
+        "comp_keyboard": {
+            "type": "physics",
+            "model": "props/cs_office/computer_keyboard.mdl"
+        },
+        "comp_monitor": {
+            "type": "physics",
+            "model": "props/cs_office/computer_monitor.mdl"
+        },
+        "comp_mouse": {
+            "type": "physics",
+            "model": "props/cs_office/computer_mouse.mdl"
+        }
+    },
+    "vehicles": {
+        "utility_truck": {
+            "type": "dynamic",
+            "model": "props/de_train/utility_truck.mdl"
+        },
+        "car_militia": {
+            "type": "dynamic",
+            "model": "props/cs_militia/car_militia.mdl"
+        },
+        "van": {
+            "type": "dynamic",
+            "model": "props/cs_militia/van.mdl"
+        },
+        "boat_blue": {
+            "type": "physics",
+            "model": "props_canal/boat001a.mdl"
+        },
+        "boat_blue2": {
+            "type": "physics",
+            "model": "props_canal/boat002b.mdl"
+        },
+        "boat_yellow": {
+            "type": "physics",
+            "model": "props_canal/boat001b.mdl"
+        },
+        "boat_fishing01a": {
+            "type": "dynamic",
+            "model": "props_wasteland/boat_fishing01a.mdl"
+        },
+        "boat_fishing02a": {
+            "type": "dynamic",
+            "model": "props_wasteland/boat_fishing02a.mdl"
+        },
+        "hand_truck": {
+            "type": "physics",
+            "model": "props/cs_assault/handtruck.mdl"
+        },
+        "forklift": {
+            "type": "dynamic",
+            "model": "props/cs_assault/forklift.mdl"
+        },
+        "boxcar": {
+            "type": "dynamic",
+            "model": "props/de_train/boxcar.mdl"
+        },
+        "boxcar2": {
+            "type": "dynamic",
+            "model": "props/de_train/boxcar2.mdl"
+        },
+        "diesel": {
+            "type": "dynamic",
+            "model": "props/de_train/diesel.mdl"
+        },
+        "flatcar": {
+            "type": "dynamic",
+            "model": "props/de_train/flatcar.mdl"
+        },
+        "tanker": {
+            "type": "dynamic",
+            "model": "props/de_train/tanker.mdl"
+        },
+        "railroadtracks128": {
+            "type": "dynamic",
+            "model": "props/de_train/railroadtracks128.mdl"
+        },
+        "railroadtracks256": {
+            "type": "dynamic",
+            "model": "props/de_train/railroadtracks256.mdl"
+        },
+        "truss02d": {
+            "type": "dynamic",
+            "model": "props/de_train/de_train_truss02d.mdl"
+        }
+    }
+}

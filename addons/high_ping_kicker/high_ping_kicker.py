@@ -86,7 +86,7 @@ def high_ping_kicker_loop():
                 menu.send(player)
                 continue
 
-            elif sam.addons_monitor.is_running('ban_manager'):
+            elif sam.addons_monitor.is_loaded('ban_manager'):
                 
                 ban_length = settings.ban_length
 

@@ -1,7 +1,4 @@
 import es
-import psyco
-
-psyco.full()
 
 sam = es.import_addon('sam')
 
@@ -17,15 +14,13 @@ sam.settings.module_config('admins_chat', {
     }
 })
 
-
 # Global Variables
 EMPTY = (0, 0, 0)
 ALLTALK = es.ServerVar('sv_alltalk')
-TAGS = {0: '#gray', 1: '#spec', 2: '#terro', 3: '#ct'}
+TAGS = {0: '#gray', 1: '#spec', 2: '#t', 3: '#ct'}
 TEAMS = {1: 'Spectator', 2: 'Terrorists', 3: 'Counter-Terrorists'}
 
 def load():
-
     # Register the filter
     f = sam.chat_filter.register('admins_chat')
     f.function = admins_chat_FILTER
@@ -33,98 +28,71 @@ def load():
     f.temporary = False
 
 def unload():
-
     # Delete the filter
     sam.chat_filter.delete('admins_chat')
 
 def admins_chat_FILTER(userid, text, teamchat):
 
-    # Ignore if the user is in a temporary filter
+    # Check if the user is currently being filtered out for chat
     if sam.chat_filter.in_filter(userid):
         return userid, text, teamchat
 
-    # If the message was sent from the server console, then send a global server message
+    # Handle console messages
     if userid == -1 and text:
         msg('#human', '@#graySERVER #white: ' + text)
         return EMPTY
 
-    # Get the user info
+    # Retrieve the player object and their team information
     user = sam.get_player(userid)
     team = user.teamid
 
-    # Make sure the first argument is not a registered command, or using a command trigger
+    # Ignore messages that start with a command prefix
     args = text.split()
     if is_command(args[0]):
         return userid, text, teamchat
 
-    # Special trigger for center messages
-    elif text.startswith('@@') and not teamchat:
-        sam.msg.center('#all', text.strip('@@'))
+    # Process center messages
+    if text.startswith('@@') and not teamchat:
+        sam.msg.center('#human', text[2:])
         return EMPTY
 
-    # Special trigger for server messages
-    elif text.startswith('@'):
-        text = text.strip('@')
-
-        # If used in team chat, then sends message to admins only
-        if teamchat:
-            msg('#admins',
-                '%s #default:  #green%s' % (TAGS[team] + user.name, text),
-                '#white@#grayADMINS')
-        
-        # If used in all chat, then sends message to everyone,
-        # regardless of their team and state
-        else:
-            msg('#human', '#white' + text, '#white@#graySERVER')
+    # Process global and Admins only messages
+    if text.startswith('@'):
+        text = text[1:]  # Remove '@' to signify an admin-only message
+        recipient = '#admins' if teamchat else '#human'
+        prefix = TAGS[team] + user.name if teamchat else '#white'
+        # Format the message for admin or public chat
+        message = '%s #default:  #green%s' % (prefix, text) if teamchat else text
+        tag = '#white@#grayADMINS' if teamchat else '#white@#graySERVER'
+        msg(recipient, message, tag)
         return EMPTY
 
-    # If the user is an Admin group, get the group name
+    # Determine if the admin group name should be displayed with the message
     group = sam.admins.get_admin_group(sam.get_steamid(userid))
-    if group and not sam.settings('admins_chat').hide_admin_group:
-        group = ' #silver(%s#silver) ' % group.name
-    else:
-        group = ''
+    hide_admin_group = sam.settings('admins_chat').hide_admin_group
+    group_name = ' #gray(%s#gray) ' % group.name if group and not hide_admin_group else ''
 
-    # Format the text with all the necessary tags    
-    text = ''.join(
-        (
-            # Add the dead tag if the user is dead
-            '#default*DEAD*' if user.isdead and team != 1 else '',
-            # Add the Spectators tag if the user is a spectator
-            '#default*SPEC*' if team == 1 and not teamchat else '',
-            # Add the team name tag if the user has spoken in team chat
-            '#default(%s)' % TEAMS[team] if teamchat else ' ',
-            # Add the group name tag if the user is an Admin group
-            group,
-            # Add the user's team color before the user name
-            TAGS[team] if team in TAGS else '#default',
-            # Add the user name
-            user.name,
-            # Add the unique Admins chat color
-            ' #default:  #beige',
-            # Add the text
-            text
-        )
-    )
+    # Add tags for dead or spectating players and format the message
+    dead_spec_tags = '#default*DEAD* ' if user.isdead and team != 1 else ''
+    dead_spec_tags += '#default*SPEC* ' if team == 1 and not teamchat else ''
+    team_tag = '#default(%s) ' % TEAMS[team] if teamchat else ''
+    formatted_text = '%s%s%s%s%s #default:  #beige%s' % (
+        dead_spec_tags, team_tag, group_name, TAGS.get(team, '#default'), user.name, text)
 
-    # Get the users to send the message to
+    # Determine who should receive the message based on game settings
     users = set([TAGS[team]])
-
-    # If alltalk is on, user may speak to everyone
     if ALLTALK and not teamchat:
-        users.add('#all')
+        users.add('#human')
 
-    # Send the message
-    msg(users, text)
+    # Send the message to the determined recipients
+    msg(users, formatted_text)
     return EMPTY
-
 
 def is_command(text):
     """
     Checks whether the text is a command, variable, or starts with a command trigger
     """
-
-    return text == 'motd' or text.startswith('!') or text.startswith('/') or \
+    return text == 'motd' or text.startswith(('!', '/')) or \
            es.exists('saycommand', text) or es.exists('command', text)
 
 def msg(users, text, _tag=False):
@@ -132,9 +100,6 @@ def msg(users, text, _tag=False):
     Used as a wrapper to send a message as the text sent by the user
     """
 
-    # Check if Admins are allowed to use custom chat colors
-    cfg = sam.settings('admins_chat')
-    text = text if cfg.allow_custom_chat_colors else sam.compile_text(text, True)
-    # Send the message
-
-    sam.msg.tell(users, text, prefix=False, tag=_tag)
+    if not sam.settings('admins_chat').allow_custom_chat_colors:
+        text = sam.format_text(text, True)
+    sam.msg.tell(users, text, prefix=False, nametag=_tag)

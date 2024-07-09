@@ -3,9 +3,6 @@
 
 import os
 import es
-import psyco
-
-psyco.full()
 
 sam = es.import_addon('sam')
 
@@ -344,7 +341,7 @@ def ban_profile_HANDLE(userid, choice, submenu):
         '#admins',
         '#red%s #beigeban removed by #cyan%s#beige.' %\
         (choice['name'], es.getplayername(userid)),
-        tag='#greenBAN MANAGER'
+        nametag='#greenBAN MANAGER'
     )
     
     # Return user to the addon menu
@@ -491,7 +488,7 @@ def is_banned(steamid, notify_expired=False):
         sam.msg.tell(
             '#admins',
             '#red%s #beigeban has expired.' % ban_info['name'],
-            tag='#greenBAN MANAGER'
+            nametag='#greenBAN MANAGER'
         )    
     
     # Unban the player

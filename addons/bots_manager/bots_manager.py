@@ -29,29 +29,40 @@ commands = (
     'bot_allow_sub_machine_guns'
 )
 modes = {
-    'bot_quota_mode': ['normal', 'fill', 'match'],
-    'bot_chatter': ['off', 'radio', 'minimal', 'normal']
+    'bot_quota_mode': ('normal', 'fill', 'match'),
+    'bot_chatter': ('off', 'radio', 'minimal', 'normal')
 }
 
 
 def load():
-    sam.cmds.chat('bots', addon_menu)
+    
+    # Register the bots manager chat command
+    sam.cmds.chat('bots', bots_CMD)
+    
+    # Load the bots manager database
     for k, v in sam.databases.load('bots_manager').items():
         exe('%s %s' % (k, v))
 
 
 def unload():
+    
+    #  Unregister the bots manager chat command
     sam.cmds.delete('bots')
+    
+    # Save the bots manager database
     sam.databases.save('bots_manager', dict((i, str(es.ServerVar(i))) for i in commands))
+    
+    # Remove all bots
     exe('bot_quota 0')
     exe('bot_kick')
 
 
-def addon_menu(userid, args=None):
+def addon_menu(userid, submenu='home_page'):
     if not sam.admins.is_allowed(userid, 'bots_manager'):
         sam.home_page(userid)
         return
-    menu = sam.Menu('bots_manager', bots_manager_HANDLE, 'home_page')
+
+    menu = sam.Menu('bots_manager', bots_manager_HANDLE, submenu)
     menu.title('Bots Manager')
     menu.add_option(1, 'Add a Bot')
     menu.add_option(2, 'Add a Bot to Counter-Terrorists')
@@ -110,3 +121,7 @@ def bot_settings_HANDLE(userid, choice, submenu):
 def choose_bot_quota_HANDLE(userid, choice, submenu):
     es.ServerVar('bot_quota').set(choice)
     bots_manager_HANDLE(userid, 6, 'bots_manager')
+    
+# Commands Functions
+def bots_CMD(userid, args):
+    addon_menu(userid, submenu=False)
